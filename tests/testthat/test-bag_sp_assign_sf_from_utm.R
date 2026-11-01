@@ -106,3 +106,17 @@ testthat::test_that("bag_sp_assign_utm and bag_sp_assign_sf_from_utm round trip"
   # a metre or so, which is what rounding the easting to three decimals leaves
   testthat::expect_equal(unname(a), unname(b), tolerance = 1e-4)
 })
+
+testthat::test_that("bag_sp_assign_sf_from_utm returns its columns in a fixed order", {
+  testthat::skip_if_not_installed("sf")
+
+  # Exact order, not set membership, because callers write this straight back to a
+  # GeoPackage. The coordinate columns survive (remove = FALSE) and the geometry column
+  # is appended last under the hardcoded name "geom", not the input's.
+  out <- bag_sp_assign_sf_from_utm(utm_frame())
+  testthat::expect_equal(
+    names(out),
+    c("site", "utm_zone", "easting", "northing", "geom")
+  )
+  testthat::expect_equal(attr(out, "sf_column"), "geom")
+})

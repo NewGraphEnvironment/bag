@@ -418,9 +418,16 @@ the same geometry. Computing it once into a variable and injecting with `!!` is 
 does half the work, and is immune to the data-masking trap a bare variable inside
 `mutate()` has. The other two files need only `|>`.
 
-- [ ] Close the column-order test gap **first, before any rewrite**: every column
-      assertion is `%in% names()`, so order is unpinned on exactly the three functions a
-      rewrite would touch, and callers write those columns to disk
+- [x] Closed the column-order test gap **before any rewrite**: every column assertion
+      was `%in% names()`, so order was unpinned on exactly the three functions a rewrite
+      would touch, and callers write those columns to disk. Measured first, then pinned:
+      the three are **inconsistent with each other** and deliberately left so.
+      `bag_assign_utm` and `bag_sf_from_utm` place the new columns before the geometry,
+      because they end on `dplyr::select()` calls that push geometry last;
+      `bag_assign_latlong` has no `select()`, so `mutate()` appends past the geometry and
+      its columns land after it. Pinned rather than reconciled: the files callers write
+      back carry this order. Mutation-checked with two `relocate()` edits in a copy of the
+      tree, 4 tests red
 - [ ] Per file, done with the Phase 9 rename so each is touched once:
       `bag_assign_latlong` — drop the two `st_coordinates(.)` calls for one, inject with
       `!!`; `bag_assign_utm` — the same, plus replace the `group_split`/`map2` pair whose

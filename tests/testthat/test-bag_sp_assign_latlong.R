@@ -71,3 +71,20 @@ testthat::test_that("bag_sp_assign_latlong leaves the geometry unmoved", {
     tolerance = 1e-6
   )
 })
+
+testthat::test_that("bag_sp_assign_latlong returns its columns in a fixed order", {
+  testthat::skip_if_not_installed("sf")
+
+  # Exact order, not set membership, because callers write these columns to disk.
+  #
+  # Note this function places its new columns AFTER the geometry column, where
+  # bag_sp_assign_utm() places its BEFORE. The difference is real and is the donors':
+  # the UTM function ends on dplyr::select() calls that push geometry last, and this one
+  # has none, so mutate() appends past it. Pinned rather than reconciled -- the files
+  # callers write back carry this order, so "tidying" it is a format change.
+  out <- bag_sp_assign_latlong(pts())
+  testthat::expect_equal(names(out), c("site", "geometry", "lon", "lat"))
+
+  renamed <- bag_sp_assign_latlong(pts(), col_lat = "latitude", col_lon = "longitude")
+  testthat::expect_equal(names(renamed), c("site", "geometry", "longitude", "latitude"))
+})

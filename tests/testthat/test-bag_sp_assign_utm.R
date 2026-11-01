@@ -132,3 +132,28 @@ testthat::test_that("bag_sp_assign_utm drops its working columns", {
   testthat::expect_false("epsg" %in% names(out))
   testthat::expect_false("long" %in% names(out))
 })
+
+testthat::test_that("bag_sp_assign_utm returns its columns in a fixed order", {
+  testthat::skip_if_not_installed("sf")
+
+  # Exact order, not set membership. Every other column assertion in this file uses
+  # `%in% names()`, which cannot see a reordering -- and callers write these columns
+  # straight to disk, so the order is part of the output format, not cosmetics. Here the
+  # three new columns land BEFORE the geometry column, which the donor's trailing
+  # dplyr::select() calls are what produce.
+  out <- suppressWarnings(bag_sp_assign_utm(three_zones()))
+  testthat::expect_equal(
+    names(out),
+    c("site", "utm_zone", "easting", "northing", "geometry")
+  )
+
+  # And with renamed columns, so the assertion pins positions rather than literal names.
+  renamed <- suppressWarnings(bag_sp_assign_utm(
+    three_zones(),
+    col_zone = "zone_utm", col_easting = "utm_easting", col_northing = "utm_northing"
+  ))
+  testthat::expect_equal(
+    names(renamed),
+    c("site", "zone_utm", "utm_easting", "utm_northing", "geometry")
+  )
+})
