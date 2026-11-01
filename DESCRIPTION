@@ -33,6 +33,9 @@ Imports:
     fs,
     glue,
     httr2,
+    janitor,
     purrr,
+    rlang,
     sf,
-    stringr
+    stringr,
+    tibble

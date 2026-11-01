@@ -4,9 +4,13 @@ template:
 
 reference:
 - title: Fetch
-  desc: Download public data to disk.
+  desc: Download public data to disk, or read it into R.
   contents:
   - has_concept("download")
+- title: Catalogue metadata
+  desc: Find a BC Data Catalogue layer and describe its columns.
+  contents:
+  - has_concept("metadata")
 - title: Files
   desc: Read, convert and inspect spatial files.
   contents:

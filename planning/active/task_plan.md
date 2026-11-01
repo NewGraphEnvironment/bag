@@ -196,15 +196,26 @@ rename lands. Target: `https://www.newgraphenvironment.com/bag/`.
 Copied in, renamed to `bag_*`, documented and tested here. The deprecating forwarders stay
 that package's job (Phase 8). Its unexported xref helper travels with the xref pair.
 
-- [ ] Port and rename the seven: the catalogue cross-reference and its column-comments
-      companion, the catalogue reader, the GPX reader, the GeoPackage-to-GeoJSON converter,
-      the GeoPackage layer remover, and the field-file backup
-- [ ] **Write tests for the four that have none** — the column-comments companion, the GPX
-      reader, the GeoJSON converter and the layer remover
-- [ ] Fix the two defects a straight copy carries, both of which pass in the donor because
-      imports resolve through sibling files: the catalogue reader calls `cli::` with no
-      `@importFrom cli`, and the GeoJSON converter declares an unused `@importFrom dplyr`
-      while calling `chk::` undeclared
+Reprefix only, per the gate: the donor stems are kept and only the prefix changes.
+
+- [x] `bag_meta_bcd_xref()` — the catalogue cross-reference, with its internal
+      `bag_meta_bcd_xref_pkg_schtab()` helper
+- [x] `bag_meta_bcd_xref_col_comments()` — the column-comments companion
+- [x] `bag_bcd_get_data()` — the catalogue reader
+- [ ] `bag_gpx_import()` — the GPX reader
+- [ ] `bag_gpkg_to_geojson()` — the GeoPackage-to-GeoJSON converter
+- [ ] `bag_u_rm_gpkg_layers()` — the GeoPackage layer remover
+- [ ] `bag_fs_backup()` — the field-file backup
+- [x] Tests for the column-comments companion (the first of the four with none)
+- [ ] Tests for the GPX reader, the GeoJSON converter and the layer remover
+- [x] Fixed in the catalogue reader: it called `cli::` with no `@importFrom cli`
+- [ ] Fix the GeoJSON converter's unused `@importFrom dplyr` and undeclared `chk::`
+- [x] **A third defect, found by the new tests and not predicted by either issue:**
+      `bag_meta_bcd_xref()` joined `bcdata_lookup_raw` to `object_names` on `package_name`
+      alone, which is not a key — a package publishing N WMS resources gave N^2 rows, and
+      N^2-N of them paired one resource's object name with another's dataset id and
+      download URL. Measured 6 rows where 4 are correct. Now joined on the row index too.
+      Reported to the donor, which still ships it
 - [ ] Decide the layer remover's fate before porting: it is badged
       `lifecycle::badge("superseded")` in favour of `gdalraster::ogr_layer_delete()`. Port
       it as-is, port it rewritten on `gdalraster`, or retire it instead of moving it

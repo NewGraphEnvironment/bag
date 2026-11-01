@@ -59,6 +59,7 @@ purrr::walk2(
 \code{\link[=bag_url]{bag_url()}} for pulling layers from arbitrary URLs.
 
 Other download: 
+\code{\link{bag_bcd_get_data}()},
 \code{\link{bag_url}()},
 \code{\link{bag_wfs}()}
 }

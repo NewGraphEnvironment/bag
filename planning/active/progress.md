@@ -45,5 +45,26 @@
   matched as a **regex** despite the `fixed()` call; and `ask = TRUE` with a `readline()`
   prompt means that under `Rscript` both functions skip every replacement and report
   "Operation canceled". Used the same approach inline instead, so each step is visible
-- Next: Phase 1 is with the user; 4b waits on it. Working Phases 5 and 6 (the intake), which
-  depend on neither
+- Phase 5, first three of seven: the catalogue family ported, reprefixed per the gate's
+  "keep the donor stems" answer. Pipes converted to `|>` (the repo's convention; the donors
+  mixed `%>%` and `|>`), every import declared, and the four catalogue functions grouped
+  under a new `metadata` family with `_pkgdown.yml` extended to match
+- Three defects fixed on the way in, each with a mutation test proving the guard fires:
+  the catalogue reader's undeclared `cli::` (predicted by the donor issue); the
+  column-comments companion comparing the caller's `column` as given against a lower-cased
+  `col_name`, so an upper-case argument silently matched nothing; and its calling
+  `bcdc_describe_feature()` twice per invocation, once inside a `tryCatch` whose value was
+  discarded
+- **A fourth defect neither issue predicted**, found by a fixture rather than by reading:
+  `bag_meta_bcd_xref()` joined on `package_name`, which is not a key. A package publishing
+  N WMS resources gave N^2 rows, and N^2-N paired one resource's object name with another's
+  dataset id. 6 rows where 4 are correct. Reported as rfp#415; the donor still ships it
+- Mutation-checked in a `tar`-ed copy rather than by editing and restoring the live tree:
+  restoring the one-key join turns 5 tests red, dropping the column lower-casing turns 2
+  red, re-adding the second service call turns 1 red
+- `devtools::test()`: FAIL 0 | WARN 0 | SKIP 2 | PASS 148, up from 88
+- `pkgdown::check_pkgdown()` verified clean in a copy with the two URLs made consistent, so
+  the reference index covers every topic and 4b's URL fix is all that stands between the
+  branch and a clean check
+- Also filed ngr#46 for the `stringr::fixed()` defect in the rename machinery
+- Next: the remaining four of Phase 5, then Phase 6. Phase 1 still with the user

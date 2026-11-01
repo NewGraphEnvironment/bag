@@ -64,6 +64,7 @@ bag_wfs(
 \code{\link[fs:create]{fs::dir_create()}}, \code{\link[fs:path]{fs::path()}}, \code{\link[sf:st_bbox]{sf::st_bbox()}}, \code{\link[sf:st_transform]{sf::st_transform()}}, \code{\link[cli:cli_alert]{cli::cli_alert_warning()}}
 
 Other download: 
+\code{\link{bag_bcd_get_data}()},
 \code{\link{bag_bcdata}()},
 \code{\link{bag_url}()}
 }
