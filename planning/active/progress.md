@@ -288,11 +288,11 @@
   — the variable now appears in the `if` condition, and the purrr formula is an anonymous
   function lintr can see into
 - **Three pre-existing defects filed rather than fixed**, since this branch only renamed
-  those bodies: [#32](https://github.com/NewGraphEnvironment/spacehakr/issues/32) a
+  those bodies: [#32](https://github.com/NewGraphEnvironment/bag/issues/32) a
   non-200 WFS body left on disk as `.geojson`,
-  [#33](https://github.com/NewGraphEnvironment/spacehakr/issues/33) `bag_wfs()`
+  [#33](https://github.com/NewGraphEnvironment/bag/issues/33) `bag_wfs()`
   reprojecting an undensified bbox rectangle, and
-  [#34](https://github.com/NewGraphEnvironment/spacehakr/issues/34) `bag_bcdc(mask =)`
+  [#34](https://github.com/NewGraphEnvironment/bag/issues/34) `bag_bcdc(mask =)`
   writing a GEOMETRYCOLLECTION QGIS will not draw
 - `devtools::test()`: FAIL 0 | WARN 0 | SKIP 2 | PASS 377, from 298. `lintr`: 0.
   `check(vignettes = FALSE)`: 0/0/0

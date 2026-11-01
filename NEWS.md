@@ -1,3 +1,81 @@
+# bag 0.5.0
+
+**The package is renamed from spacehakr to bag, every exported function is renamed with
+it, and ten functions are gone.** Nothing written against `spacehakr 0.4.2` keeps working.
+Install `NewGraphEnvironment/spacehakr@v0.4.2` for the old package — the tag still
+resolves through GitHub's repository redirect.
+
+The subject is now one thing: fetching public data and field files to disk.
+
+## The name
+
+`spacehakr` described a grab-bag of spatial helpers. The package no longer is one, so the
+name no longer described it. `bag` is what it does — it fetches things and puts them
+somewhere.
+
+The old pkgdown site at `www.newgraphenvironment.com/spacehakr/` goes dark. GitHub
+redirects repository URLs but not Pages paths. The site is now
+`www.newgraphenvironment.com/bag/`.
+
+## Functions that stayed, renamed
+
+| spacehakr 0.4.2 | bag 0.5.0 |
+|---|---|
+| `spk_source_url()` | `bag_url()` |
+| `spk_source_bcdata()` | `bag_bcdc()` |
+| `spk_geoserv_dlv()` | `bag_wfs()` |
+| `spk_layer_info()` | `bag_layers()` |
+
+## Functions removed
+
+`spk_gdalwarp()`, `spk_join()`, `spk_odm()`, `spk_poly_to_points()`, `spk_q_layer_info()`,
+`spk_rast_ext()`, `spk_rast_not_empty()`, `spk_rast_rm_empty()`, `spk_res()` and
+`spk_stac_calc()`. These were raster, drone-imagery and STAC helpers — a different subject
+— and nothing called them under these names.
+
+**`ngr` exports its own independent copies of all ten and does not depend on this
+package**, so code calling `ngr_spk_*` is unaffected. That is where this family came from
+and where it remains.
+
+The two pkgdown articles went with them: both documented only `spk_stac_calc()`.
+
+## Functions added
+
+Eleven, taken in from two older first-party packages whose subject is reporting rather
+than fetching. Those packages keep deprecating forwarders, so their callers are not
+broken.
+
+- **BC Data Catalogue:** `bag_bcdc_read()` reads a record into memory, `bag_bcdc_index()`
+  builds a lookup of every catalogue layer with a WMS resource, `bag_bcdc_cols()`
+  describes one column.
+- **Files:** `bag_gpx_import()` reads a GPS unit's GPX files into a GeoPackage,
+  `bag_gpkg_to_geojson()` writes each layer of a GeoPackage out as GeoJSON,
+  `bag_backup()` copies a file into a backup directory with a timestamp, and
+  `bag_gpkg_refresh()` refreshes a point GeoPackage's coordinate columns.
+- **Coordinates:** `bag_assign_utm()` and `bag_assign_latlong()` write coordinate columns
+  onto an `sf` object; `bag_sf_from_utm()` builds an `sf` object from UTM columns.
+
+Nine defects were found and fixed while porting these, and each was reported to the
+package it came from. Among them: a geometry guard that could never fire, written as
+`!x != y` where `!` binds looser than `!=`; a GPX timestamp filter that compared a UTC
+instant against a machine-local one; and a GeoPackage layer remover with a data-loss path,
+which was then dropped from this package altogether as superseded upstream.
+
+## Other changes
+
+- `magrittr` is not a dependency. The donated functions arrived with magrittr pipelines
+  and were rewritten to the native pipe.
+- **Dependencies.** `Imports` is 15, from 14: `terra` and `xml2` went with the deleted
+  helpers, and `janitor`, `lubridate` and `readr` arrived with the intake. `Suggests` is
+  3, from 12 — `grDevices`, `kableExtra`, `knitr`, `leafem`, `leaflet`, `mapview`,
+  `processx`, `rmarkdown`, `rstac` and `stars` were all there for the deleted functions
+  and their articles.
+- The pkgdown reference index is grouped by `@family`, so it now fails the build when an
+  export is missing from it. It previously had no `reference:` section at all, which made
+  `pkgdown::check_pkgdown()` vacuous.
+- The package has a `.lintr` config for the first time. `lintr::lint_package()` is clean.
+- `R CMD check` is 0 errors, 0 warnings, 0 notes.
+
 # spacehakr 0.4.2
 
 No change to the package's functions.

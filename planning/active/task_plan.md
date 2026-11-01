@@ -82,9 +82,11 @@ Taken as conventional defaults, stated rather than asked:
 
 ## Phase 1 — Rename the repository
 
-- [ ] `gh repo rename bag --repo NewGraphEnvironment/spacehakr` — confirm on the call first
-- [ ] `git remote set-url origin`; push the branch and confirm the ref landed
-- [ ] Confirm `https://www.newgraphenvironment.com/bag/` serves once pkgdown next deploys,
+- [x] `gh repo rename bag --repo NewGraphEnvironment/spacehakr` — confirmed by the owner
+      2026-11-01. The old path redirects, measured: `gh api repos/NewGraphEnvironment/spacehakr`
+      answers `NewGraphEnvironment/bag`, so `spacehakr@v0.4.2` stays installable
+- [x] `git remote set-url origin`; pushed, and `origin/<branch>` confirmed equal to HEAD
+- [x] Confirm `https://www.newgraphenvironment.com/bag/` serves once pkgdown next deploys,
       and note that the **old Pages path goes dark** — GitHub redirects repository URLs but
       not Pages paths, and `NEWS.md`, `CITATION.cff` and an internal ecosystem registry all
       point into the old site
@@ -165,7 +167,10 @@ independent of the repository rename; everything in 4b needs it.
       `system.file(package = )` call in the keepers' tests
 - [x] `data-raw/make_hexsticker.R` `package_name`; `dev/vm_packages.md`;
       `planning/README.md`
-- [ ] Regenerate `man/figures/logo*.png` from the edited hexsticker script
+- [x] Regenerate `man/figures/logo*.png` from the edited hexsticker script. Both read
+      correctly at the width the README publishes them. Noted, not changed: the script
+      asks for Helvetica and the renderer warns it is absent and substitutes `sans`, so
+      `CLAUDE.md`'s "Helvetica font" describes the request rather than the result
 
 **Moved to Phase 7:** the `Version:` bump. `r-packages.md` puts it as the *final* commit of
 the branch, "after verification numbers/tests are final" — a mid-branch bump is churn, and
@@ -176,18 +181,18 @@ the plan had it here by mistake.
 Every item names a path containing the repository name, so none can be written until the
 rename lands. Target: `https://www.newgraphenvironment.com/bag/`.
 
-- [ ] `DESCRIPTION` `URL:` and `BugReports:`
-- [ ] `_pkgdown.yml` `url:` — must agree with `DESCRIPTION`, or `check_pkgdown()` aborts
-- [ ] `CITATION.cff` via `/citation-cff` — eight hits, and its workflow fires only on a
+- [x] `DESCRIPTION` `URL:` and `BugReports:`
+- [x] `_pkgdown.yml` `url:` — must agree with `DESCRIPTION`, or `check_pkgdown()` aborts
+- [x] `CITATION.cff` via `/citation-cff` — eight hits, and its workflow fires only on a
       push to `main` touching `DESCRIPTION`, so on this branch it stays stale
-- [ ] `README.Rmd` → re-knit. Larger than a find-and-replace: the two functions the package
+- [x] `README.Rmd` → re-knit. Larger than a find-and-replace: the two functions the package
       exists for appear **nowhere** in it today, including in its function table, so this is
       writing their first examples with real output. Also the two CI badge URLs at `:20`,
       the logo `alt` text at `:16`, the install line and the `library()` calls
-- [ ] `NEWS.md`: a `# bag <version>` heading recording the rename, the new names, the
+- [x] `NEWS.md`: a `# bag <version>` heading recording the rename, the new names, the
       deletion with its `v0.4.2` tag, and the intake. Leave the `# spacehakr <v>` history.
       Written with the version, so it lands with Phase 7
-- [ ] `CLAUDE.md` above the marker: Repository/URL lines, the migration table, the naming
+- [x] `CLAUDE.md` above the marker: Repository/URL lines, the migration table, the naming
       section, the `@family` list, the `Key Dependencies` list (drop `httr`), the file-name
       and `gh issue create` examples, and the stale `Remotes:` section. Name no internal repo
 
@@ -297,13 +302,16 @@ Reprefix only, per the gate: the donor stems are kept and only the prefix change
       the internal guard), 18 `R/*.R` (15 exports, two internal helpers, `utils.R`).
       Re-measured after Phase 10's drop and Phase 9's rename: **14** exports, 14
       `man/*.Rd`, 15 test files, 17 `R/*.R`
-- [ ] `pkgdown::check_pkgdown()` — **blocked on 4b.** Verified clean in a copy of the tree
+- [x] `pkgdown::check_pkgdown()` — now clean in the live tree, not only in a copy.
+      Previously blocked on 4b. Verified clean in a copy of the tree
       with the two URLs made consistent, so the reference index covers every topic and the
       URL is the only thing outstanding. Re-verified the same way after Phase 9 renamed
       the `metadata` concept to `catalogue` and moved two functions between families:
       "No problems found", so all 14 exports are still reached by the four groups
-- [ ] Release `bag 0.5.0` as the final commit of the branch, tag, GitHub release —
-      **blocked on 4b**, which is blocked on Phase 1
+- [x] `bag 0.5.0` is the final commit of the branch: `DESCRIPTION` `Version:` and
+      `Date:`, `NEWS.md`, and `CITATION.cff` regenerated from the bumped `DESCRIPTION`.
+      **The tag and the GitHub release are not cut here** — they belong on the merge
+      commit, and the merge is the owner's (`/gh-pr-merge` does that bookkeeping)
 
 ## Phase 8 — Protect, then switch, the consumers (separate PRs)
 

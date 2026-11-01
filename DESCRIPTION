@@ -1,7 +1,7 @@
 Package: bag
 Title: Fetch Public Data and Field Files to Disk
-Version: 0.4.2
-Date: 2026-10-31
+Version: 0.5.0
+Date: 2026-11-01
 Authors@R: c(
     person("Allan", "Irvine", , "al@newgraphenvironment.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-3495-2128",
@@ -26,8 +26,8 @@ Suggests:
     withr
 Config/DOI: 10.5281/zenodo.23524742
 Config/testthat/edition: 3
-URL: https://github.com/NewGraphEnvironment/spacehakr, https://newgraphenvironment.github.io/spacehakr/
-BugReports: https://github.com/NewGraphEnvironment/spacehakr/issues
+URL: https://github.com/NewGraphEnvironment/bag, http://www.newgraphenvironment.com/bag/
+BugReports: https://github.com/NewGraphEnvironment/bag/issues
 Imports:
     bcdata,
     chk,
