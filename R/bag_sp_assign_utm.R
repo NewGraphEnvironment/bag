@@ -26,7 +26,7 @@
 #' @importFrom dplyr arrange bind_rows distinct group_by group_split mutate pull select
 #' @importFrom magrittr %>%
 #' @importFrom purrr map map2
-#' @importFrom rlang sym
+#' @importFrom rlang := sym
 #' @importFrom sf st_coordinates st_crs st_geometry st_transform
 #'
 #' @examples
@@ -54,8 +54,9 @@ bag_sp_assign_utm <- function(dat = NULL,
   # have meant to point at existing ones.
   if (!col_easting %in% names(dat) || !col_northing %in% names(dat)) {
     cli::cli_warn(c(
-      "{.arg col_easting} ({.field {col_easting}}) and {.arg col_northing} ({.field {col_northing}}) are not columns of {.arg dat}.",
-      i = "They will be created. Pass the existing column names if that is not what you want."
+      "{.arg col_easting} and {.arg col_northing} are not columns of {.arg dat}.",
+      i = "Looking for {.field {col_easting}} and {.field {col_northing}}.",
+      i = "They will be created. Pass the existing names if that is not what you want."
     ))
   }
 

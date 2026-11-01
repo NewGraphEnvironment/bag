@@ -11,3 +11,5 @@
 ^\.git$
 ^planning$
 ^CITATION\.cff$
+^\.lintr$
+^\.claude$

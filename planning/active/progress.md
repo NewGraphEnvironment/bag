@@ -120,5 +120,25 @@
   every missing column. No mutation could distinguish them, so the guard was removed rather
   than left as untestable defensive code
 - `devtools::test()`: FAIL 0 | WARN 0 | SKIP 2 | PASS 308, up from 218
+- Phase 7's unblocked half done. `R CMD check(vignettes = FALSE)`: **0 errors, 0 warnings,
+  0 notes**, after fixing two it found — `.lintr` and `.claude` were shipping in the tarball,
+  and `.` and `:=` were undefined globals from the magrittr pipelines
+- Added the `.lintr` config the repo never had; without one lintr ran 80-char defaults and
+  buried the real lints in noise. Took `r-packages.md`'s recommended config, which needed
+  two corrections: its `"renv" = list(linters = "all")` form is rejected outright by lintr
+  3.3.0.1, and the magrittr files are excluded per-linter rather than disabling
+  `pipe_consistency_linter` package-wide. `lintr::lint_package()` is now 0 lints
+- The stale-install trap bit exactly as the convention describes: lintr reported `no visible
+  binding` for names already in `globalVariables()`, because it resolves against the
+  installed package — which was `spacehakr 0.4.0`, and `bag` not at all. Reinstalling
+  cleared them without a code change
+- Tarball verified: 66 entries, no `.Rproj`, `planning/` or `CLAUDE.md`. The first attempt at
+  that check **passed while doing nothing** — `ls` is colourised here, so the captured path
+  carried ANSI codes, `tar` failed, and the `||` arm printed "none leaked". A guard failing
+  toward pass, caught only by asserting the entry count was non-zero
+- One more of my own caught by the suite: shortening a cli warning for line length dropped
+  the literal argument name a test matched on. The message now names both the argument and
+  its value, and the assertion checks both, so neither can drift out silently
+- `devtools::test()`: FAIL 0 | WARN 0 | SKIP 2 | PASS 310. `lintr`: 0. `check`: 0/0/0
 - Next: everything remaining is blocked on Phase 1, which is with the user. 4b needs the new
-  URL; 7 needs 4b; 8 needs the merge
+  URL; 7's release needs 4b; 8 needs the merge

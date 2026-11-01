@@ -1,0 +1,20 @@
+linters: linters_with_defaults(
+    line_length_linter(120),
+    object_name_linter(styles = c("snake_case", "dotted.case")),
+    commented_code_linter = NULL
+  )
+exclusions: list(
+    "renv" = Inf,
+    # The four functions ported from the fish-passage package keep their magrittr
+    # pipelines on purpose: they use the `.` placeholder inside dplyr::mutate(), which the
+    # native pipe has no equivalent for, and their row ordering and CRS round trip are
+    # relied on by the files their callers write back. See each file's own comment.
+    "R/bag_sp_assign_utm.R" = list(
+      pipe_consistency_linter = Inf, object_usage_linter = Inf
+    ),
+    "R/bag_sp_assign_latlong.R" = list(
+      pipe_consistency_linter = Inf, object_usage_linter = Inf
+    ),
+    "R/bag_sp_assign_sf_from_utm.R" = list(pipe_consistency_linter = Inf),
+    "R/bag_sp_gpkg_backup.R" = list(pipe_consistency_linter = Inf)
+  )

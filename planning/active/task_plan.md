@@ -272,12 +272,34 @@ Reprefix only, per the gate: the donor stems are kept and only the prefix change
 
 ## Phase 7 — Verify and release
 
-- [ ] `devtools::test()` green; `lintr::lint_package()` clean. Reinstall first — the
-      installed copy is `0.4.0` against a `0.4.2` source, and both `lintr` and the test
-      runner resolve against the installed package
-- [ ] `devtools::check(vignettes = FALSE)` with no ERROR or WARNING
-- [ ] `pkgdown::check_pkgdown()`, now that `_pkgdown.yml` has a `reference:` index
-- [ ] Release `bag 0.5.0` as the final commit of the branch, tag, GitHub release
+- [x] `devtools::test()` green and `lintr::lint_package()` clean — **after reinstalling**.
+      The convention's trap landed exactly as written: lintr resolved against the installed
+      package, which was `spacehakr 0.4.0` and then a `bag` without the newest
+      `globalVariables()`, so it reported `no visible binding` for names that were already
+      declared. Reinstall first, then read the lints
+- [x] **Added the `.lintr` config this repo never had.** Without one lintr ran its 80-char
+      defaults. The config is the one `r-packages.md` prescribes, with two changes: its
+      `"renv" = list(linters = "all")` form is rejected by lintr 3.3.0.1 (`Named entries of
+      setting exclusions should designate line numbers`) so it is `"renv" = Inf`, and the
+      four magrittr-bearing files exclude `pipe_consistency_linter` by name rather than the
+      linter being switched off package-wide
+- [x] `devtools::check(vignettes = FALSE)`: **0 errors, 0 warnings, 0 notes.** Two notes
+      were found and fixed on the way: `.lintr` and `.claude` were shipping in the tarball
+      (now in `.Rbuildignore`), and `.` and `:=` were undefined globals from the magrittr
+      pipelines (`.` declared, `:=` imported from rlang)
+- [x] `R CMD build` and the tarball inspected: 66 entries, shipping only `DESCRIPTION`,
+      `inst/`, `LICENSE`, `man/`, `NAMESPACE`, `NEWS.md`, `R/`, `README.md` and `tests/`.
+      No `.Rproj`, no `planning/`, no `CLAUDE.md`. The first attempt at this check **passed
+      while doing nothing** — `ls` is colourised here, so the captured path carried ANSI
+      codes, `tar` failed, and the `||` arm reported "none leaked". Re-run with `find` and a
+      non-zero entry count asserted first
+- [x] Counts agree: 15 `export()` lines, 15 `man/*.Rd`, 16 test files (one per export plus
+      the internal guard), 18 `R/*.R` (15 exports, two internal helpers, `utils.R`)
+- [ ] `pkgdown::check_pkgdown()` — **blocked on 4b.** Verified clean in a copy of the tree
+      with the two URLs made consistent, so the reference index covers every topic and the
+      URL is the only thing outstanding
+- [ ] Release `bag 0.5.0` as the final commit of the branch, tag, GitHub release —
+      **blocked on 4b**, which is blocked on Phase 1
 
 ## Phase 8 — Protect, then switch, the consumers (separate PRs)
 

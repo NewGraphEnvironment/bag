@@ -22,15 +22,19 @@ bag_wfs(
 
 \item{layer_name_raw}{\link{character} A WFS layer name, usually including a namespace (e.g., \code{geonode:LayerName}).}
 
-\item{layer_name_out}{\link{character} Optional. Output file name without extension. Defaults to the name extracted from \code{layer_name_raw}.}
+\item{layer_name_out}{\link{character} Optional. Output file name without extension. Defaults to the name extracted
+from \code{layer_name_raw}.}
 
 \item{crs}{\link{integer} EPSG code for the coordinate reference system to request from the server. Default is 3005.}
 
-\item{bbox}{\code{\link[sf:st_bbox]{sf::st_bbox()}} Optional. A bounding box to filter features spatially. Must be in the same CRS or coercible.}
+\item{bbox}{\code{\link[sf:st_bbox]{sf::st_bbox()}} Optional. A bounding box to filter features spatially. Must be in the same CRS or
+coercible.}
 
-\item{format_out}{\link{character} WFS output format. Common values: "json", "GML2", "shape-zip". Default is "json" and function will need to be modified in the future to accommodate other formats.}
+\item{format_out}{\link{character} WFS output format. Common values: "json", "GML2", "shape-zip". Default is "json" and
+function will need to be modified in the future to accommodate other formats.}
 
-\item{discard_no_features}{\link{logical} Optional. If \code{TRUE}, automatically deletes downloaded files that have zero features. Default is \code{TRUE}.}
+\item{discard_no_features}{\link{logical} Optional. If \code{TRUE}, automatically deletes downloaded files that have zero
+features. Default is \code{TRUE}.}
 }
 \value{
 Invisibly returns the output file path on success. Prints status messages to console.

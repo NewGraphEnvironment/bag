@@ -9,11 +9,15 @@
 #' @param url_geoserver [character] A single URL string to the GeoServer WFS endpoint.
 #' @param dir_out [character] A directory path where the output file will be saved. Must exist or be creatable.
 #' @param layer_name_raw [character] A WFS layer name, usually including a namespace (e.g., `geonode:LayerName`).
-#' @param layer_name_out [character] Optional. Output file name without extension. Defaults to the name extracted from `layer_name_raw`.
+#' @param layer_name_out [character] Optional. Output file name without extension. Defaults to the name extracted
+#'   from `layer_name_raw`.
 #' @param crs [integer] EPSG code for the coordinate reference system to request from the server. Default is 3005.
-#' @param bbox [sf::st_bbox()] Optional. A bounding box to filter features spatially. Must be in the same CRS or coercible.
-#' @param format_out [character] WFS output format. Common values: "json", "GML2", "shape-zip". Default is "json" and function will need to be modified in the future to accommodate other formats.
-#' @param discard_no_features [logical] Optional. If `TRUE`, automatically deletes downloaded files that have zero features. Default is `TRUE`.
+#' @param bbox [sf::st_bbox()] Optional. A bounding box to filter features spatially. Must be in the same CRS or
+#'   coercible.
+#' @param format_out [character] WFS output format. Common values: "json", "GML2", "shape-zip". Default is "json" and
+#'   function will need to be modified in the future to accommodate other formats.
+#' @param discard_no_features [logical] Optional. If `TRUE`, automatically deletes downloaded files that have zero
+#'   features. Default is `TRUE`.
 #'
 #' @return Invisibly returns the output file path on success. Prints status messages to console.
 #'

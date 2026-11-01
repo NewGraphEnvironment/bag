@@ -173,9 +173,10 @@ bag_gpx_import <- function(dir_gpx_waypoints = "/Volumes/GARMIN/Garmin/GPX/",
       quiet = TRUE
     )
 
-    cli::cli_alert_info(
-      "{nrow(layer_data)} {.field {layer}} written to {.path {path_gpx}} and to {.path {path_gpkg}} (layer {.field {layer_out}})."
-    )
+    cli::cli_alert_info(c(
+      "{nrow(layer_data)} {.field {layer}} written to {.path {path_gpx}}",
+      i = "and to {.path {path_gpkg}}, layer {.field {layer_out}}."
+    ))
     invisible(NULL)
   }
 

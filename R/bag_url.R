@@ -140,14 +140,14 @@
 #' @importFrom fs path_dir file_exists
 #' @importFrom tools file_path_sans_ext
 bag_url <- function(path_gpkg,
-                           urls,
-                           query = NULL,
-                           layer = NULL,
-                           open_options = NULL,
-                           a_srs = NULL,
-                           t_srs = NULL,
-                           encoding = NULL,
-                           vsi = "curl") {
+                    urls,
+                    query = NULL,
+                    layer = NULL,
+                    open_options = NULL,
+                    a_srs = NULL,
+                    t_srs = NULL,
+                    encoding = NULL,
+                    vsi = "curl") {
   chk::chk_string(path_gpkg)
   chk::chk_dir(fs::path_dir(path_gpkg))
   chk::chk_character(urls)
@@ -369,13 +369,13 @@ stderr_tail <- function(path) {
 #'
 #' @noRd
 .bag_url_args <- function(path_gpkg,
-                                 source,
-                                 layer,
-                                 query = NULL,
-                                 open_options = NULL,
-                                 a_srs = NULL,
-                                 t_srs = NULL,
-                                 update = TRUE) {
+                          source,
+                          layer,
+                          query = NULL,
+                          open_options = NULL,
+                          a_srs = NULL,
+                          t_srs = NULL,
+                          update = TRUE) {
   c(
     "-f", "GPKG",
     path_gpkg,

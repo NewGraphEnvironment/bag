@@ -14,7 +14,7 @@ if (!requireNamespace("hexSticker", quietly = TRUE)) {
 library(hexSticker)
 
 # Configuration parameters (easy to tweak)
-logo_url <- "https://raw.githubusercontent.com/NewGraphEnvironment/new_graphiti/main/assets/logos/logo_newgraph/WHITE/PNG/nge-icon_white.png"
+logo_url <- "https://raw.githubusercontent.com/NewGraphEnvironment/new_graphiti/main/assets/logos/logo_newgraph/WHITE/PNG/nge-icon_white.png" # nolint: line_length_linter. A URL cannot be wrapped.
 logo_file <- "data-raw/nge-icon_white.png"
 output_file <- "man/figures/logo.png"
 package_name <- "bag"

@@ -105,7 +105,12 @@ testthat::test_that("bag_sp_assign_utm returns rows ordered by zone", {
 testthat::test_that("bag_sp_assign_utm warns when the coordinate columns are absent", {
   testthat::skip_if_not_installed("sf")
 
-  testthat::expect_warning(bag_sp_assign_utm(three_zones()), "col_easting")
+  w <- testthat::expect_warning(bag_sp_assign_utm(three_zones()))
+  # Both the argument name and the value it holds: matching only the interpolated value
+  # cannot see whether the message still says which argument is meant, and matching only
+  # the argument name broke silently when the message was reworded for line length.
+  testthat::expect_match(conditionMessage(w), "col_easting")
+  testthat::expect_match(conditionMessage(w), "easting")
 })
 
 testthat::test_that("bag_sp_assign_utm stays quiet when the coordinate columns exist", {

@@ -99,7 +99,8 @@ bag_meta_bcd_xref <- function(pkg_exclude = c("bc-web-map-library")) {
     )
 
   if (nrow(pkgs_multi_wms) > 0) {
-    pkgs <- pkgs_multi_wms |>
+    # Used only inside the cli string below, which codetools does not parse.
+    pkgs <- pkgs_multi_wms |> # nolint: object_usage_linter.
       dplyr::select(package_name) |>
       dplyr::distinct()
 

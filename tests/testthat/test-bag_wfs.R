@@ -10,7 +10,7 @@ test_that("bag_wfs errors on non-existent directory", {
 
 test_that("bag_wfs validates required parameters", {
   tmpdir <- tempdir()
-  
+
   # Missing layer_name_raw should error
   expect_error(
     bag_wfs(dir_out = tmpdir, layer_name_raw = NULL),
@@ -20,14 +20,14 @@ test_that("bag_wfs validates required parameters", {
 
 test_that("bag_wfs extracts layer name from raw name", {
   skip("Requires live WFS endpoint - skipping integration test")
-  
+
   # This would test actual download functionality
   # Skipped because it requires network and live server
 })
 
 test_that("bag_wfs parameter validation works", {
   tmpdir <- tempdir()
-  
+
   # Invalid discard_no_features (not logical)
   expect_error(
     bag_wfs(
@@ -37,7 +37,7 @@ test_that("bag_wfs parameter validation works", {
     ),
     class = "chk_error"
   )
-  
+
   # Invalid CRS (not numeric when it should be)
   # Note: chk doesn't validate CRS value, just type
   expect_no_error({
@@ -49,19 +49,19 @@ test_that("bag_wfs parameter validation works", {
 
 test_that("bag_wfs creates output directory if needed", {
   skip("Requires live WFS endpoint - skipping integration test")
-  
+
   # Would test fs::dir_create functionality
   # Skipped to avoid network calls
 })
 
 test_that("bag_wfs bbox handling", {
   skip_if_not_installed("sf")
-  
+
   tmpdir <- tempdir()
-  
+
   # Create a simple bbox
   bbox <- sf::st_bbox(c(xmin = -180, ymin = -90, xmax = 180, ymax = 90), crs = 4326)
-  
+
   # Function should accept bbox without error (even if download fails)
   # Just testing parameter validation, not actual download
   expect_no_error({

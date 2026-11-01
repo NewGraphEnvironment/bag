@@ -19,7 +19,8 @@ Attempts to determine the geometry type of each layer by querying a sample featu
 }
 \details{
 Uses \code{\link[sf:st_layers]{sf::st_layers()}} to list available layers in the data source.
-For each layer, attempts to read a single feature using an SQL query and determines the geometry type using \code{\link[sf:st_geometry_type]{sf::st_geometry_type()}}.
+For each layer, attempts to read a single feature using an SQL query and determines the geometry type using
+\code{\link[sf:st_geometry_type]{sf::st_geometry_type()}}.
 Layers with no geometry or errors in reading are safely assigned \code{NA}.
 The \code{driver} column is removed from the output as it may contain invalid entries for further data frame operations.
 }

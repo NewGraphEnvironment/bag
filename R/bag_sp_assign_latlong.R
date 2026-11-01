@@ -18,6 +18,7 @@
 #' @importFrom cli cli_abort
 #' @importFrom dplyr mutate
 #' @importFrom magrittr %>%
+#' @importFrom rlang :=
 #' @importFrom sf st_coordinates st_crs st_geometry st_transform
 #'
 #' @examples
