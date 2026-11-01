@@ -11,7 +11,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/NewGraphEnvironment/bag/blob/v0.5.0/inst/CITATION)
+[`inst/CITATION`](https://github.com/NewGraphEnvironment/bag/blob/main/inst/CITATION)
 
 Irvine A (2026). *bag: Fetch Public Data and Field Files to Disk*. New
 Graph Environment Ltd.
