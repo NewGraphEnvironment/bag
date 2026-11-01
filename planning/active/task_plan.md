@@ -475,7 +475,11 @@ does half the work, and is immune to the data-masking trap a bare variable insid
 
 ## Owed at the end (reported, done after merge)
 
-- [ ] File `fpr`'s forwarder issue, and report on the counterpart issue that bag exists
+- [x] Filed `fpr`'s forwarder issue,
+      [fpr#141](https://github.com/NewGraphEnvironment/fpr/issues/141) — the four renames,
+      the `fn_site_id` injection that keeps the two packages independent, and the four
+      defects a delegating forwarder inherits for free. Still owed: reporting on the
+      internal package's counterpart issue that bag exists
 - [x] **Reported every donor defect found while porting.** Nine were found and only one
       had been filed; the rest sat in `progress.md`, reported nowhere, and this list did
       not ask for them. Filed 2026-10-31, grouped by function and each verified still
@@ -508,6 +512,19 @@ does half the work, and is immune to the data-masking trap a bare variable insid
       regression introduced by Phase 11's rewrite
 - [ ] PWF checkboxes match landed work
 - [ ] `/planning-archive` on completion
+
+## Open at the PR, and why
+
+- **The merge is the owner's**, so the tag, the GitHub release and the post-merge CI
+  watch are `/gh-pr-merge`'s, not this branch's
+- **[rfp PR #419](https://github.com/NewGraphEnvironment/rfp/pull/419) must merge first.**
+  It pins the one consumer to `@v0.4.2`; without it, merging this makes that repo
+  uninstallable and nine reporting repos install it
+- **`sred#26`'s title still says `spacehakr`**, so `rnd_issue.sh` returns `NONE` for this
+  repo and every future PR here will miss the R&D line. The line was written into
+  [PR #35](https://github.com/NewGraphEnvironment/bag/pull/35) by hand on the strength of
+  PR #30's precedent. Retitling is the owner's call — `feature-workflow.md` reserves it,
+  because the title's final group decides effort membership
 
 How each change is proved:
 
