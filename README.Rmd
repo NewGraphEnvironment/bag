@@ -42,9 +42,13 @@ release if you need one to hold still.
 # install.packages("pak")
 pak::pkg_install("NewGraphEnvironment/bag")
 
-# or pin a release
-pak::pkg_install("NewGraphEnvironment/bag@v0.5.0")
+# or pin a release -- see NEWS.md for the tags
+pak::pkg_install("NewGraphEnvironment/bag@vX.Y.Z")
 ```
+
+`bag_url()` shells out to GDAL's `ogr2ogr` and aborts if it is not on the `PATH`. Every
+other function uses GDAL through sf, which bundles its own. On macOS, `brew install gdal`;
+on Ubuntu, `apt install gdal-bin`.
 
 ## What it looks like
 
@@ -105,15 +109,18 @@ bag_gpx_import(
 
 ## Learn more
 
-Every exported function is documented with a runnable example at
-<http://www.newgraphenvironment.com/bag/reference/>. The reference index is grouped by
-what the function is for: fetching, the BC Data Catalogue, files, and coordinates.
+Every exported function is documented at
+<http://www.newgraphenvironment.com/bag/reference/>, with the reference index grouped by
+what the function is for: fetching, the BC Data Catalogue, files, and coordinates. The
+four coordinate and layer-listing functions carry examples that run; the other ten are
+`\dontrun{}`, because they reach the network or write to disk.
 
 ## Ecosystem
 
 bag is one of several small R packages New Graph Environment builds its reporting on.
-[`fwapg`](https://github.com/smnorris/fwapg) and the BC Data Catalogue are where most of
-the data it fetches comes from.
+What it fetches comes from whatever you point it at: the
+[BC Data Catalogue](https://catalogue.data.gov.bc.ca/), a GeoServer WFS endpoint, or any
+URL GDAL can open.
 
 ## Citation
 

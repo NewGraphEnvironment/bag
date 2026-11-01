@@ -24,9 +24,9 @@
 #' @examples
 #' \dontrun{
 #' bag_backup(
-#'   path_dir_in = "~/Projects/gis/my_project",
+#'   path_dir_in = file.path(tempdir(), "my_project"),
 #'   path_in_file = "background_layers.gpkg",
-#'   path_dir_out = "~/Projects/gis/backups"
+#'   path_dir_out = file.path(tempdir(), "backups")
 #' )
 #' }
 bag_backup <- function(path_dir_in,

@@ -41,9 +41,13 @@ The two pkgdown articles went with them: both documented only `spk_stac_calc()`.
 
 ## Functions added
 
-Eleven, taken in from two older first-party packages whose subject is reporting rather
-than fetching. Those packages keep deprecating forwarders, so their callers are not
-broken.
+Ten. Eleven were taken in from two older first-party packages whose subject is
+reporting rather than fetching; one of those, a GeoPackage layer remover, was then
+dropped again (below).
+
+**Nothing calling the old names breaks**, because those packages still hold their own
+copies of these functions — they are not forwarders yet. Adding deprecating forwarders,
+so the two do not drift apart, is tracked in each of them.
 
 - **BC Data Catalogue:** `bag_bcdc_read()` reads a record into memory, `bag_bcdc_index()`
   builds a lookup of every catalogue layer with a WMS resource, `bag_bcdc_cols()`
@@ -67,9 +71,10 @@ which was then dropped from this package altogether as superseded upstream.
   and were rewritten to the native pipe.
 - **Dependencies.** `Imports` is 15, from 14: `terra` and `xml2` went with the deleted
   helpers, and `janitor`, `lubridate` and `readr` arrived with the intake. `Suggests` is
-  3, from 12 — `grDevices`, `kableExtra`, `knitr`, `leafem`, `leaflet`, `mapview`,
+  5, from 12: `grDevices`, `kableExtra`, `knitr`, `leafem`, `leaflet`, `mapview`,
   `processx`, `rmarkdown`, `rstac` and `stars` were all there for the deleted functions
-  and their articles.
+  and their articles, and `DBI` and `RSQLite` arrived for the GeoPackage fixtures the
+  new tests build.
 - The pkgdown reference index is grouped by `@family`, so it now fails the build when an
   export is missing from it. It previously had no `reference:` section at all, which made
   `pkgdown::check_pkgdown()` vacuous.

@@ -30,7 +30,6 @@
 #' @importFrom sf st_coordinates st_crs st_geometry st_transform
 #'
 #' @examples
-#' \dontrun{
 #' sf_df <- data.frame(
 #'   lon = c(-128.5, -123.5, -118.5), # UTM zones 9, 10 and 11
 #'   lat = c(45.5, 45.5, 45.5)
@@ -38,7 +37,6 @@
 #'   sf::st_as_sf(coords = c("lon", "lat"), crs = 4326)
 #'
 #' bag_assign_utm(dat = sf_df)
-#' }
 bag_assign_utm <- function(dat = NULL,
                            col_zone = "utm_zone",
                            col_easting = "easting",

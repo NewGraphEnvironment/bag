@@ -37,7 +37,6 @@ Rows come back \strong{ordered by UTM zone}, not in their input order. That is t
 behaviour and is relied on by the files its callers write back.
 }
 \examples{
-\dontrun{
 sf_df <- data.frame(
   lon = c(-128.5, -123.5, -118.5), # UTM zones 9, 10 and 11
   lat = c(45.5, 45.5, 45.5)
@@ -45,7 +44,6 @@ sf_df <- data.frame(
   sf::st_as_sf(coords = c("lon", "lat"), crs = 4326)
 
 bag_assign_utm(dat = sf_df)
-}
 }
 \seealso{
 \code{\link[=bag_sf_from_utm]{bag_sf_from_utm()}} to build an \code{sf} object from such columns — not an

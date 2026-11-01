@@ -68,7 +68,7 @@ object exactly, because rebuilding it from the csv introduces small differences.
 \dontrun{
 # refresh the coordinate columns and hand the object back, writing nothing
 updated <- bag_gpkg_refresh(
-  path_gpkg = "~/Projects/gis/my_project/form_fiss_site_2026.gpkg",
+  path_gpkg = file.path(tempdir(), "form_fiss_site_2026.gpkg"),
   write_to_csv = FALSE,
   write_to_rdata = FALSE,
   return_object = TRUE,

@@ -21,13 +21,11 @@
 #' @importFrom sf st_coordinates st_crs st_geometry st_transform
 #'
 #' @examples
-#' \dontrun{
 #' sf_df <- data.frame(lon = -128.5, lat = 54.5) |>
 #'   sf::st_as_sf(coords = c("lon", "lat"), crs = 4326) |>
 #'   sf::st_transform(3005)
 #'
 #' bag_assign_latlong(sf_df, col_lon = "long")
-#' }
 bag_assign_latlong <- function(dat = NULL,
                                col_lat = "lat",
                                col_lon = "lon") {

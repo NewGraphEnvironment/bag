@@ -42,9 +42,14 @@ projected, and it is not something the function can check — a UTM \code{crs_re
 accepted and gives silently wrong coordinates for every zone but one.
 }
 \examples{
-\dontrun{
-bag_sf_from_utm(pscis_all)
-}
+sites <- data.frame(
+  site = c("a", "b"),
+  utm_zone = c(9, 10),
+  easting = c(532381, 605471),
+  northing = c(6039269, 6229640)
+)
+
+bag_sf_from_utm(sites)
 }
 \seealso{
 \code{\link[=bag_assign_utm]{bag_assign_utm()}} to write those columns onto an \code{sf} object. The two are

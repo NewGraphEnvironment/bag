@@ -20,10 +20,10 @@
 #' @family files
 #'
 #' @examples
-#' \dontrun{
 #' # Get layer information from a GeoPackage
-#' layer_info <- bag_layers("path/to/data.gpkg")
-#' }
+#' layer_info <- bag_layers(
+#'   system.file("extdata", "poly.gpkg", package = "bag")
+#' )
 #'
 #' @importFrom sf st_layers st_read st_geometry_type
 #' @importFrom dplyr mutate select

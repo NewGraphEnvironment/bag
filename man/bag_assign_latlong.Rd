@@ -22,13 +22,11 @@ Transforms the object to WGS 84, reads off latitude and longitude as columns, an
 transforms back to the input CRS.
 }
 \examples{
-\dontrun{
 sf_df <- data.frame(lon = -128.5, lat = 54.5) |>
   sf::st_as_sf(coords = c("lon", "lat"), crs = 4326) |>
   sf::st_transform(3005)
 
 bag_assign_latlong(sf_df, col_lon = "long")
-}
 }
 \seealso{
 \code{\link[=bag_assign_utm]{bag_assign_utm()}} for UTM zone, easting and northing.

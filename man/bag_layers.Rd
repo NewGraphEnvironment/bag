@@ -25,10 +25,10 @@ Layers with no geometry or errors in reading are safely assigned \code{NA}.
 The \code{driver} column is removed from the output as it may contain invalid entries for further data frame operations.
 }
 \examples{
-\dontrun{
 # Get layer information from a GeoPackage
-layer_info <- bag_layers("path/to/data.gpkg")
-}
+layer_info <- bag_layers(
+  system.file("extdata", "poly.gpkg", package = "bag")
+)
 
 }
 \seealso{
