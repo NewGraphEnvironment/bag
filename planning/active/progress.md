@@ -58,7 +58,7 @@
 - **A fourth defect neither issue predicted**, found by a fixture rather than by reading:
   `bag_meta_bcd_xref()` joined on `package_name`, which is not a key. A package publishing
   N WMS resources gave N^2 rows, and N^2-N paired one resource's object name with another's
-  dataset id. 6 rows where 4 are correct. Reported as rfp#415; the donor still ships it
+  dataset id. 6 rows where 4 are correct. Reported to the internal package; it still ships it
 - Mutation-checked in a `tar`-ed copy rather than by editing and restoring the live tree:
   restoring the one-key join turns 5 tests red, dropping the column lower-casing turns 2
   red, re-adding the second service call turns 1 red

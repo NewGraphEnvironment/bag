@@ -391,15 +391,21 @@ This is the issue's own item 5 criterion, "helpers nothing calls", and it holds 
 cleanly here than for the ten deleted in Phase 3: those at least had live callers under
 their pre-extraction names.
 
-- [ ] Delete `R/bag_u_rm_gpkg_layers.R`, its test file (11 blocks) and its `man/` page
-- [ ] Drop `lifecycle` from `Suggests` — this was its only user
-- [ ] Remove its `_pkgdown.yml` reference entry; exports 15 to 14
-- [ ] **Precondition:** file the data-loss defect with the donor first. The donor still
-      ships the broken version, and deleting our copy would leave the fix nowhere
+- [x] Deleted `R/bag_u_rm_gpkg_layers.R`, its test file (11 blocks) and its `man/` page
+- [x] Dropped `lifecycle` from `Suggests` — this was its only user
+- [x] No `_pkgdown.yml` edit needed: its reference index uses `has_concept()` groups, so
+      the entry drops out with the function. Exports 15 to 14, `man/` 14 pages, tests
+      310 to 292 passing, `document()` clean
+- [x] **Precondition met:** the data-loss defect was filed with the internal package
+      before the deletion, carrying the fixed implementation, since that repo still ships
+      the broken version and deleting our copy would otherwise leave the fix nowhere
 
-## Phase 11 — Remove magrittr (deferred to its own issue)
+## Phase 11 — Remove magrittr (folded into this branch)
 
-Decided with the owner, 2026-10-31: filed as a separate issue, not done on this branch.
+Decided with the owner, 2026-10-31. First deferred to its own issue, then folded in on
+reflection: Phase 9's rename opens these same four files, and the column-order tests have
+to be written either way, so doing it separately would mean touching them twice and
+reviewing them twice.
 
 Measured: no newer package of ours declares `magrittr` or uses `%>%` in `R/` at all —
 0 of 68 R files in one, 0 of 46 in another, 0 of 49, 0 of 18, 0 of 17, 0 of 11. Five older
@@ -412,19 +418,35 @@ the same geometry. Computing it once into a variable and injecting with `!!` is 
 does half the work, and is immune to the data-masking trap a bare variable inside
 `mutate()` has. The other two files need only `|>`.
 
-- [ ] Close the column-order test gap **on this branch**, before any rewrite: every column
+- [ ] Close the column-order test gap **first, before any rewrite**: every column
       assertion is `%in% names()`, so order is unpinned on exactly the three functions a
       rewrite would touch, and callers write those columns to disk
+- [ ] Per file, done with the Phase 9 rename so each is touched once:
+      `bag_assign_latlong` — drop the two `st_coordinates(.)` calls for one, inject with
+      `!!`; `bag_assign_utm` — the same, plus replace the `group_split`/`map2` pair whose
+      group order has to match a separately derived CRS vector (an invariant held together
+      by a comment) with a loop over `unique(sort(epsg))`; `bag_sf_from_utm` — `%>%` to
+      `|>`, its `.x` is a purrr lambda and needs nothing; `bag_gpkg_refresh` — `%>%` to
+      `|>`, a plain chain
+- [ ] `magrittr` out of `Imports` (16 to 15) and the four `@importFrom magrittr %>%` lines
+      out; `rlang` stays for `:=` and `.data`
+- [ ] The four per-file `pipe_consistency_linter` exclusions come out of `.lintr` with it
 
 ## Owed at the end (reported, done after merge)
 
 - [ ] File `fpr`'s forwarder issue, and report on the counterpart issue that bag exists
-- [ ] **Report every donor defect found while porting.** Nine were found and one was
-      filed; the rest were recorded in `progress.md` and reported nowhere, and this
-      list did not ask for them. Both donors still ship them. Grouped by function:
-      the catalogue xref family (3), the GPX reader (3) and the layer remover's
-      data-loss path for the internal package; the coordinate helpers' never-firing
-      geometry guard and the backup's `dir_backup` branch for `fpr`
+- [x] **Reported every donor defect found while porting.** Nine were found and only one
+      had been filed; the rest sat in `progress.md`, reported nowhere, and this list did
+      not ask for them. Filed 2026-10-31, grouped by function and each verified still
+      present in the donor's current tree first: three issues with the internal package
+      (the catalogue family's column-case/doubled-call/undeclared-import, the GPX reader's
+      three, and the layer remover's data-loss path), and
+      [fpr#139](https://github.com/NewGraphEnvironment/fpr/issues/139) for the
+      never-firing geometry guard plus
+      [fpr#140](https://github.com/NewGraphEnvironment/fpr/issues/140) for the
+      `dir_backup` branch. Correction made while verifying: the guard is in **three** fpr
+      helpers, not four — `fpr_sp_assign_sf_from_utm()` takes a plain data frame and
+      correctly has none
 - [ ] Report to the umbrella issue that its ODM conditional is settled — drone jobs do
       still run — and that three public repos depend on `ngr`'s copies of the helpers this
       branch deletes, which its ngr-retirement row has to cover
