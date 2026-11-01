@@ -1,32 +1,52 @@
 # Package index
 
-## All functions
+## Fetch
 
-- [`spk_gdalwarp()`](http://www.newgraphenvironment.com/spacehakr/reference/spk_gdalwarp.md)
-  : Generate GDALWarp Command Arguments
-- [`spk_geoserv_dlv()`](http://www.newgraphenvironment.com/spacehakr/reference/spk_geoserv_dlv.md)
-  : Download a Vector Layer from a GeoServer WFS
-- [`spk_join()`](http://www.newgraphenvironment.com/spacehakr/reference/spk_join.md)
-  : Spatial Join with Optional Mask Filtering and Column Selection
-- [`spk_layer_info()`](http://www.newgraphenvironment.com/spacehakr/reference/spk_layer_info.md)
-  : Summarise Layers and Geometry Types in a Spatial Data Source
-- [`spk_odm()`](http://www.newgraphenvironment.com/spacehakr/reference/spk_odm.md)
-  : Construct Docker Command Arguments for ODM
-- [`spk_poly_to_points()`](http://www.newgraphenvironment.com/spacehakr/reference/spk_poly_to_points.md)
-  : Generate Regularly Spaced Points Inside Polygons
-- [`spk_q_layer_info()`](http://www.newgraphenvironment.com/spacehakr/reference/spk_q_layer_info.md)
-  : Extract Layer Information from QGIS Project
-- [`spk_rast_ext()`](http://www.newgraphenvironment.com/spacehakr/reference/spk_rast_ext.md)
-  : Compute Combined Extent (Bounding Box) from Multiple Raster Files
-- [`spk_rast_not_empty()`](http://www.newgraphenvironment.com/spacehakr/reference/spk_rast_not_empty.md)
-  : Check if Raster Has Non-Zero Data
-- [`spk_rast_rm_empty()`](http://www.newgraphenvironment.com/spacehakr/reference/spk_rast_rm_empty.md)
-  : Remove Empty Raster Files
-- [`spk_res()`](http://www.newgraphenvironment.com/spacehakr/reference/spk_res.md)
-  : Extract Resolution from a Raster
-- [`spk_source_bcdata()`](http://www.newgraphenvironment.com/spacehakr/reference/spk_source_bcdata.md)
-  : Download a BC Data Catalogue Layer to a GeoPackage
-- [`spk_source_url()`](http://www.newgraphenvironment.com/spacehakr/reference/spk_source_url.md)
+Bring data onto disk — from a URL, from a GeoServer WFS endpoint, or
+from a GPS unit’s GPX files.
+
+- [`bag_gpx_import()`](http://www.newgraphenvironment.com/bag/reference/bag_gpx_import.md)
+  : Import GPX waypoints and tracks from a GPS mounted as a volume
+- [`bag_url()`](http://www.newgraphenvironment.com/bag/reference/bag_url.md)
   : Download and Convert Files to GeoPackage Layers
-- [`spk_stac_calc()`](http://www.newgraphenvironment.com/spacehakr/reference/spk_stac_calc.md)
-  : Retrieve and optionally calculate spectral indices from a STAC item
+- [`bag_wfs()`](http://www.newgraphenvironment.com/bag/reference/bag_wfs.md)
+  : Download a Vector Layer from a GeoServer WFS
+
+## BC Data Catalogue
+
+Find a catalogue layer and describe its columns, then download it to a
+GeoPackage or read it into R.
+
+- [`bag_bcdc()`](http://www.newgraphenvironment.com/bag/reference/bag_bcdc.md)
+  : Download a BC Data Catalogue Layer to a GeoPackage
+- [`bag_bcdc_cols()`](http://www.newgraphenvironment.com/bag/reference/bag_bcdc_cols.md)
+  : Describe one column of a BC Data Catalogue layer
+- [`bag_bcdc_index()`](http://www.newgraphenvironment.com/bag/reference/bag_bcdc_index.md)
+  : Build a lookup table of BC Data Catalogue layers
+- [`bag_bcdc_read()`](http://www.newgraphenvironment.com/bag/reference/bag_bcdc_read.md)
+  : Read a BC Data Catalogue layer
+
+## Files
+
+Inspect, convert and back up spatial files.
+
+- [`bag_backup()`](http://www.newgraphenvironment.com/bag/reference/bag_backup.md)
+  : Back up a file, with an optional timestamp
+- [`bag_gpkg_refresh()`](http://www.newgraphenvironment.com/bag/reference/bag_gpkg_refresh.md)
+  : Refresh a single-layer point GeoPackage's coordinate columns
+- [`bag_gpkg_to_geojson()`](http://www.newgraphenvironment.com/bag/reference/bag_gpkg_to_geojson.md)
+  : Write every layer of a GeoPackage out as GeoJSON
+- [`bag_layers()`](http://www.newgraphenvironment.com/bag/reference/bag_layers.md)
+  : Summarise Layers and Geometry Types in a Spatial Data Source
+
+## Coordinates
+
+Move between geometry and UTM or latitude/longitude columns.
+
+- [`bag_assign_latlong()`](http://www.newgraphenvironment.com/bag/reference/bag_assign_latlong.md)
+  : Assign latitude and longitude columns to an sf point object
+- [`bag_assign_utm()`](http://www.newgraphenvironment.com/bag/reference/bag_assign_utm.md)
+  : Assign UTM zone, easting and northing to an sf point object
+- [`bag_sf_from_utm()`](http://www.newgraphenvironment.com/bag/reference/bag_sf_from_utm.md)
+  : Build an sf object from NAD 83 UTM zone, easting and northing
+  columns

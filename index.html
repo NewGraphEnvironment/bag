@@ -5,15 +5,15 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Spatial Analysis, Raster Processing, and Geospatial Data Access • spacehakr</title>
+<title>Fetch Public Data and Field Files to Disk • bag</title>
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Spatial Analysis, Raster Processing, and Geospatial Data Access">
-<meta name="description" content="Tools for spatial analysis, raster processing, and geospatial data access. Includes functions for GDAL/OpenDroneMap command building, GeoServer WFS downloads, STAC catalog queries, spatial joins, and raster operations. Extracted from the ngr package's ngr_spk_* function family.">
-<meta property="og:description" content="Tools for spatial analysis, raster processing, and geospatial data access. Includes functions for GDAL/OpenDroneMap command building, GeoServer WFS downloads, STAC catalog queries, spatial joins, and raster operations. Extracted from the ngr package's ngr_spk_* function family.">
-<meta property="og:image" content="http://www.newgraphenvironment.com/spacehakr/logo.png">
+<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Fetch Public Data and Field Files to Disk">
+<meta name="description" content="Fetches public spatial data and field files and saves them to disk. Sources include arbitrary URLs read through GDAL virtual filesystems, the BC Data Catalogue, and GeoServer WFS endpoints. Also reads GPX files, converts and inspects GeoPackage layers, and backs up field data files.">
+<meta property="og:description" content="Fetches public spatial data and field files and saves them to disk. Sources include arbitrary URLs read through GDAL virtual filesystems, the BC Data Catalogue, and GeoServer WFS endpoints. Also reads GPX files, converts and inspects GeoPackage layers, and backs up field data files.">
+<meta property="og:image" content="http://www.newgraphenvironment.com/bag/logo.png">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -21,9 +21,9 @@
 
     <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
 
-    <a class="navbar-brand me-2" href="index.html">spacehakr</a>
+    <a class="navbar-brand me-2" href="index.html">bag</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,20 +33,13 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
-<li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="articles/stac-sentinel2-ortho-timelapse.html">STAC ortho timelapse</a></li>
-    <li><a class="dropdown-item" href="articles/stac-spectral-indices.html">STAC spectral indices with spk_stac_calc</a></li>
-  </ul>
-</li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="search.json">
 </form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/NewGraphEnvironment/spacehakr/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/NewGraphEnvironment/bag/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
@@ -56,220 +49,118 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header">
-<img src="logo.png" class="logo" alt=""><h1 id="spacehakr-">spacehakr <a class="anchor" aria-label="anchor" href="#spacehakr-"></a>
+<img src="logo.png" class="logo" alt=""><h1 id="bag-">bag <a class="anchor" aria-label="anchor" href="#bag-"></a>
 </h1>
 </div>
 <!-- badges: start -->
 
-<p>Spatial analysis and geospatial data tools for R — raster processing, WFS access, GDAL command building, spatial joins, and STAC catalog queries.</p>
+<p>bag fetches public spatial data and field files, and puts them on disk where the rest of your work can reach them: a layer behind a URL, a BC Data Catalogue record, a GeoServer WFS endpoint, or the GPX files on a GPS unit back from the field. It then does the small jobs that follow — convert a GeoPackage to GeoJSON, list what a data source holds, back a file up before you change it, and move point data between geometry and UTM or latitude/longitude columns.</p>
+<p>The point is reproducibility. A fish-passage assessment or a restoration design rests on data somebody downloaded once; a script that fetches it again, to a named path, with the coordinate columns regenerated from the geometry rather than typed, is the difference between a report you can rebuild next year and one you cannot.</p>
+<p>Functions change between releases while the package is experimental — see <a href="https://github.com/NewGraphEnvironment/bag/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a>, and pin a release if you need one to hold still.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
-<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pkg_install.html" class="external-link">pkg_install</a></span><span class="op">(</span><span class="st">"NewGraphEnvironment/spacehakr"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pkg_install.html" class="external-link">pkg_install</a></span><span class="op">(</span><span class="st">"NewGraphEnvironment/bag"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># or pin a release -- see NEWS.md for the tags</span></span>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pkg_install.html" class="external-link">pkg_install</a></span><span class="op">(</span><span class="st">"NewGraphEnvironment/bag@vX.Y.Z"</span><span class="op">)</span></span></code></pre></div>
+<p><code><a href="reference/bag_url.html">bag_url()</a></code> shells out to GDAL’s <code>ogr2ogr</code> and aborts if it is not on the <code>PATH</code>. Every other function uses GDAL through sf, which bundles its own. On macOS, <code>brew install gdal</code>; on Ubuntu, <code>apt install gdal-bin</code>.</p>
 </div>
 <div class="section level2">
-<h2 id="examples">Examples<a class="anchor" aria-label="anchor" href="#examples"></a>
+<h2 id="what-it-looks-like">What it looks like<a class="anchor" aria-label="anchor" href="#what-it-looks-like"></a>
 </h2>
+<p>Ask a data source what it holds, before reading any of it:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/NewGraphEnvironment/spacehakr" class="external-link">spacehakr</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rspatial.org/" class="external-link">terra</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; terra 1.8.93</span></span></code></pre></div>
-<div class="section level3">
-<h3 id="inspect-layers-in-a-geopackage">Inspect Layers in a GeoPackage<a class="anchor" aria-label="anchor" href="#inspect-layers-in-a-geopackage"></a>
-</h3>
-<p>Query layer names and geometry types from any vector data source:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Get path to bundled test data</span></span>
-<span><span class="va">gpkg_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"poly.gpkg"</span>, package <span class="op">=</span> <span class="st">"spacehakr"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/NewGraphEnvironment/bag" class="external-link">bag</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="reference/spk_layer_info.html">spk_layer_info</a></span><span class="op">(</span><span class="va">gpkg_path</span><span class="op">)</span></span>
+<span><span class="va">gpkg</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"poly.gpkg"</span>, package <span class="op">=</span> <span class="st">"bag"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># it also returns each layer's full CRS, which is a WKT block -- trimmed here</span></span>
+<span><span class="fu"><a href="reference/bag_layers.html">bag_layers</a></span><span class="op">(</span><span class="va">gpkg</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"name"</span>, <span class="st">"geomtype"</span>, <span class="st">"features"</span>, <span class="st">"fields"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;   name geomtype features fields</span></span>
-<span><span class="co">#&gt; 1 poly  POLYGON        5      3</span></span>
-<span><span class="co">#&gt;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       crs</span></span>
-<span><span class="co">#&gt; 1 WGS 84, GEOGCRS["WGS 84",\n    ENSEMBLE["World Geodetic System 1984 ensemble",\n        MEMBER["World Geodetic System 1984 (Transit)"],\n        MEMBER["World Geodetic System 1984 (G730)"],\n        MEMBER["World Geodetic System 1984 (G873)"],\n        MEMBER["World Geodetic System 1984 (G1150)"],\n        MEMBER["World Geodetic System 1984 (G1674)"],\n        MEMBER["World Geodetic System 1984 (G1762)"],\n        MEMBER["World Geodetic System 1984 (G2139)"],\n        ELLIPSOID["WGS 84",6378137,298.257223563,\n            LENGTHUNIT["metre",1]],\n        ENSEMBLEACCURACY[2.0]],\n    PRIMEM["Greenwich",0,\n        ANGLEUNIT["degree",0.0174532925199433]],\n    CS[ellipsoidal,2],\n        AXIS["geodetic latitude (Lat)",north,\n            ORDER[1],\n            ANGLEUNIT["degree",0.0174532925199433]],\n        AXIS["geodetic longitude (Lon)",east,\n            ORDER[2],\n            ANGLEUNIT["degree",0.0174532925199433]],\n    USAGE[\n        SCOPE["Horizontal component of 3D system."],\n        AREA["World."],\n        BBOX[-90,-180,90,180]],\n    ID["EPSG",4326]]</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="compute-combined-extent-from-multiple-rasters">Compute Combined Extent from Multiple Rasters<a class="anchor" aria-label="anchor" href="#compute-combined-extent-from-multiple-rasters"></a>
-</h3>
-<p>Calculate the union bounding box across multiple raster files:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Get paths to bundled test rasters</span></span>
-<span><span class="va">rast_files</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"test1.tif"</span>, package <span class="op">=</span> <span class="st">"spacehakr"</span><span class="op">)</span>,</span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"test2.tif"</span>, package <span class="op">=</span> <span class="st">"spacehakr"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; 1 poly  POLYGON        5      3</span></span></code></pre></div>
+<p>Write the UTM zone, easting and northing a field form expects, derived from the geometry rather than typed in. Rows come back ordered by zone. The fourth site below was entered before the GPS had a fix, so it has no geometry — it keeps its attributes and gets <code>NA</code> coordinates rather than being dropped. Both warnings are the function saying what it did:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sites</span> <span class="op">&lt;-</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/sf.html" class="external-link">st_sf</a></span><span class="op">(</span></span>
+<span>  site <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"skeena"</span>, <span class="st">"bulkley"</span>, <span class="st">"peace"</span>, <span class="st">"no_fix_yet"</span><span class="op">)</span>,</span>
+<span>  geometry <span class="op">=</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/sfc.html" class="external-link">st_sfc</a></span><span class="op">(</span></span>
+<span>    <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st.html" class="external-link">st_point</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">128.5</span>, <span class="fl">54.5</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st.html" class="external-link">st_point</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">126.9</span>, <span class="fl">54.8</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st.html" class="external-link">st_point</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">121.3</span>, <span class="fl">56.2</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st.html" class="external-link">st_point</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>    crs <span class="op">=</span> <span class="fl">4326</span></span>
+<span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Get combined extent</span></span>
-<span><span class="va">bbox</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/spk_rast_ext.html">spk_rast_ext</a></span><span class="op">(</span><span class="va">rast_files</span><span class="op">)</span></span>
-<span><span class="va">bbox</span></span>
-<span><span class="co">#&gt;      xmin      ymin      xmax      ymax </span></span>
-<span><span class="co">#&gt;  668376.2 6042688.0  672724.8 6046013.4</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="spatial-joins-with-filtering">Spatial Joins with Filtering<a class="anchor" aria-label="anchor" href="#spatial-joins-with-filtering"></a>
-</h3>
-<p>Join points to polygons with optional column selection and filtering:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Load bundled test data</span></span>
-<span><span class="va">points</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">st_read</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"points.gpkg"</span>, package <span class="op">=</span> <span class="st">"spacehakr"</span><span class="op">)</span>, </span>
-<span>  quiet <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">polygons</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">st_read</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"poly.gpkg"</span>, package <span class="op">=</span> <span class="st">"spacehakr"</span><span class="op">)</span>, </span>
-<span>  quiet <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Join points to polygons, returning specific columns</span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/spk_join.html">spk_join</a></span><span class="op">(</span></span>
-<span>  target_tbl <span class="op">=</span> <span class="va">points</span>,</span>
-<span>  mask_tbl <span class="op">=</span> <span class="va">polygons</span>,</span>
-<span>  target_col_return <span class="op">=</span> <span class="st">"id"</span>,</span>
-<span>  mask_col_return <span class="op">=</span> <span class="st">"attribute_string"</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">result</span></span>
-<span><span class="co">#&gt; Simple feature collection with 7 features and 2 fields</span></span>
+<span><span class="fu"><a href="reference/bag_assign_utm.html">bag_assign_utm</a></span><span class="op">(</span><span class="va">sites</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: `col_easting` and `col_northing` do not name columns of `dat`.</span></span>
+<span><span class="co">#&gt; ℹ Looking for easting and northing.</span></span>
+<span><span class="co">#&gt; ℹ They will be created. Pass the existing names if that is not what you want.</span></span>
+<span><span class="co">#&gt; Warning: 1 row of `dat` has no usable coordinates.</span></span>
+<span><span class="co">#&gt; ℹ Its utm_zone, easting, and northing are NA; every other column is kept.</span></span>
+<span><span class="co">#&gt; ℹ An empty geometry, or an NA coordinate, does this.</span></span>
+<span><span class="co">#&gt; Simple feature collection with 4 features and 4 fields (with 1 geometry empty)</span></span>
 <span><span class="co">#&gt; Geometry type: POINT</span></span>
 <span><span class="co">#&gt; Dimension:     XY</span></span>
-<span><span class="co">#&gt; Bounding box:  xmin: 0 ymin: 0 xmax: 10 ymax: 10</span></span>
+<span><span class="co">#&gt; Bounding box:  xmin: -128.5 ymin: 54.5 xmax: -121.3 ymax: 56.2</span></span>
 <span><span class="co">#&gt; Geodetic CRS:  WGS 84</span></span>
-<span><span class="co">#&gt;     id attribute_string          geom</span></span>
-<span><span class="co">#&gt; 1    1                a   POINT (0 0)</span></span>
-<span><span class="co">#&gt; 1.1  1                b   POINT (0 0)</span></span>
-<span><span class="co">#&gt; 2    2                b   POINT (1 1)</span></span>
-<span><span class="co">#&gt; 2.1  2                c   POINT (1 1)</span></span>
-<span><span class="co">#&gt; 3    3                d   POINT (2 2)</span></span>
-<span><span class="co">#&gt; 4    4                e   POINT (3 3)</span></span>
-<span><span class="co">#&gt; 5    5             &lt;NA&gt; POINT (10 10)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="build-gdal-warp-commands">Build GDAL Warp Commands<a class="anchor" aria-label="anchor" href="#build-gdal-warp-commands"></a>
-</h3>
-<p>Generate GDAL command strings for raster reprojection:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Build a gdalwarp command (interactive = TRUE returns full command string)</span></span>
-<span><span class="va">input_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"test1.tif"</span>, package <span class="op">=</span> <span class="st">"spacehakr"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">cmd</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/spk_gdalwarp.html">spk_gdalwarp</a></span><span class="op">(</span></span>
-<span>  path_in <span class="op">=</span> <span class="va">input_file</span>,</span>
-<span>  path_out <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"output.tif"</span><span class="op">)</span>,</span>
-<span>  t_srs <span class="op">=</span> <span class="st">"EPSG:3005"</span>,</span>
-<span>  target_resolution <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">10</span><span class="op">)</span>,</span>
-<span>  resampling <span class="op">=</span> <span class="st">"bilinear"</span>,</span>
-<span>  interactive <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="co">#&gt;         site utm_zone easting northing            geometry</span></span>
+<span><span class="co">#&gt; 1     skeena        9  532381  6039269 POINT (-128.5 54.5)</span></span>
+<span><span class="co">#&gt; 2    bulkley        9  634991  6074558 POINT (-126.9 54.8)</span></span>
+<span><span class="co">#&gt; 3      peace       10  605471  6229640 POINT (-121.3 56.2)</span></span>
+<span><span class="co">#&gt; 4 no_fix_yet       NA      NA       NA         POINT EMPTY</span></span></code></pre></div>
+<p>Fetching is the other half, and it needs the network, so it is not run here:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># a layer from the BC Data Catalogue, clipped to a mask, straight to a GeoPackage</span></span>
+<span><span class="fu"><a href="reference/bag_bcdc.html">bag_bcdc</a></span><span class="op">(</span></span>
+<span>  bcdata_record_id <span class="op">=</span> <span class="st">"pscis-assessments"</span>,</span>
+<span>  path_gpkg <span class="op">=</span> <span class="st">"data/pscis.gpkg"</span>,</span>
+<span>  mask <span class="op">=</span> <span class="va">aoi</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">cmd</span><span class="op">)</span></span>
-<span><span class="co">#&gt; gdalwarp -overwrite -multi -wo NUM_THREADS=ALL_CPUS -t_srs EPSG:3005 -r bilinear -tr 10 10 /tmp/RtmpWmInno/temp_libpathd1f65705ea16/spacehakr/extdata/test1.tif /tmp/Rtmpc0pAHm/output.tif</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="download-from-geoserver-wfs">Download from GeoServer WFS<a class="anchor" aria-label="anchor" href="#download-from-geoserver-wfs"></a>
-</h3>
-<p>Fetch vector data from BC’s GeoServer (requires network access):</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Download contour lines within a bounding box</span></span>
-<span><span class="va">contours</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/spk_geoserv_dlv.html">spk_geoserv_dlv</a></span><span class="op">(</span></span>
-<span>  url_geoserver <span class="op">=</span> <span class="st">"https://openmaps.gov.bc.ca/geo/pub/ows"</span>,</span>
-<span>  dir_out <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  layer_name_raw <span class="op">=</span> <span class="st">"pub:WHSE_BASEMAPPING.TRIM_CONTOUR_LINES"</span>,</span>
-<span>  bbox <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">123.5</span>, <span class="fl">48.0</span>, <span class="op">-</span><span class="fl">123.0</span>, <span class="fl">48.5</span><span class="op">)</span>,</span>
-<span>  crs <span class="op">=</span> <span class="fl">4326</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="query-stac-catalogs">Query STAC Catalogs<a class="anchor" aria-label="anchor" href="#query-stac-catalogs"></a>
-</h3>
-<p>Calculate spectral indices from STAC items (requires <code>rstac</code> and network access):</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://brazil-data-cube.github.io/rstac/" class="external-link">rstac</a></span><span class="op">)</span></span>
+<span><span class="co"># anything GDAL can open behind a URL</span></span>
+<span><span class="fu"><a href="reference/bag_url.html">bag_url</a></span><span class="op">(</span></span>
+<span>  urls <span class="op">=</span> <span class="st">"https://example.org/layers/streams.geojson"</span>,</span>
+<span>  path_gpkg <span class="op">=</span> <span class="st">"data/streams.gpkg"</span></span>
+<span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Query Landsat data</span></span>
-<span><span class="va">items</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://brazil-data-cube.github.io/rstac/reference/stac.html" class="external-link">stac</a></span><span class="op">(</span><span class="st">"https://planetarycomputer.microsoft.com/api/stac/v1"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://brazil-data-cube.github.io/rstac/reference/stac_search.html" class="external-link">stac_search</a></span><span class="op">(</span></span>
-<span>    collections <span class="op">=</span> <span class="st">"landsat-c2-l2"</span>,</span>
-<span>    bbox <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">123.5</span>, <span class="fl">48.0</span>, <span class="op">-</span><span class="fl">123.0</span>, <span class="fl">48.5</span><span class="op">)</span>,</span>
-<span>    datetime <span class="op">=</span> <span class="st">"2023-06-01/2023-08-31"</span></span>
-<span>  <span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://brazil-data-cube.github.io/rstac/reference/request.html" class="external-link">post_request</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://brazil-data-cube.github.io/rstac/reference/items_functions.html" class="external-link">items_sign</a></span><span class="op">(</span>sign_fn <span class="op">=</span> <span class="fu"><a href="https://brazil-data-cube.github.io/rstac/reference/items_sign_planetary_computer.html" class="external-link">sign_planetary_computer</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Calculate NDVI from the first item</span></span>
-<span><span class="va">ndvi</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/spk_stac_calc.html">spk_stac_calc</a></span><span class="op">(</span></span>
-<span>  feature <span class="op">=</span> <span class="va">items</span><span class="op">$</span><span class="va">features</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>,</span>
-<span>  asset_a <span class="op">=</span> <span class="st">"red"</span>,</span>
-<span>  asset_b <span class="op">=</span> <span class="st">"nir08"</span>,</span>
-<span>  calc <span class="op">=</span> <span class="st">"ndvi"</span></span>
+<span><span class="co"># the GPX files on a GPS unit, into one GeoPackage</span></span>
+<span><span class="fu"><a href="reference/bag_gpx_import.html">bag_gpx_import</a></span><span class="op">(</span></span>
+<span>  dir_out <span class="op">=</span> <span class="st">"data/gps"</span>,</span>
+<span>  layer_output_name <span class="op">=</span> <span class="st">"2026_field"</span>,</span>
+<span>  gpkg_name <span class="op">=</span> <span class="st">"gps_2026"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-</div>
 </div>
 <div class="section level2">
-<h2 id="function-reference">Function Reference<a class="anchor" aria-label="anchor" href="#function-reference"></a>
+<h2 id="learn-more">Learn more<a class="anchor" aria-label="anchor" href="#learn-more"></a>
 </h2>
-<table class="table">
-<colgroup>
-<col width="31%">
-<col width="68%">
-</colgroup>
-<thead><tr>
-<th>Function</th>
-<th>Description</th>
-</tr></thead>
-<tbody>
-<tr>
-<td><code><a href="reference/spk_layer_info.html">spk_layer_info()</a></code></td>
-<td>List layers and geometry types in vector sources</td>
-</tr>
-<tr>
-<td><code><a href="reference/spk_rast_ext.html">spk_rast_ext()</a></code></td>
-<td>Compute combined extent from multiple rasters</td>
-</tr>
-<tr>
-<td><code><a href="reference/spk_join.html">spk_join()</a></code></td>
-<td>Spatial join with filtering and column selection</td>
-</tr>
-<tr>
-<td><code><a href="reference/spk_gdalwarp.html">spk_gdalwarp()</a></code></td>
-<td>Build GDAL warp commands</td>
-</tr>
-<tr>
-<td><code><a href="reference/spk_geoserv_dlv.html">spk_geoserv_dlv()</a></code></td>
-<td>Download from GeoServer WFS</td>
-</tr>
-<tr>
-<td><code><a href="reference/spk_stac_calc.html">spk_stac_calc()</a></code></td>
-<td>Calculate indices from STAC items</td>
-</tr>
-<tr>
-<td><code><a href="reference/spk_odm.html">spk_odm()</a></code></td>
-<td>Build OpenDroneMap commands</td>
-</tr>
-<tr>
-<td><code><a href="reference/spk_res.html">spk_res()</a></code></td>
-<td>Query raster resolution</td>
-</tr>
-<tr>
-<td><code><a href="reference/spk_rast_rm_empty.html">spk_rast_rm_empty()</a></code></td>
-<td>Remove empty rasters from file lists</td>
-</tr>
-</tbody>
-</table>
+<p>Every exported function is documented at <a href="http://www.newgraphenvironment.com/bag/reference/" class="uri">http://www.newgraphenvironment.com/bag/reference/</a>, with the reference index grouped by what the function is for: fetching, the BC Data Catalogue, files, and coordinates. The four coordinate and layer-listing functions carry examples that run; the other ten are <code>\dontrun{}</code>, because they reach the network or write to disk.</p>
+</div>
+<div class="section level2">
+<h2 id="ecosystem">Ecosystem<a class="anchor" aria-label="anchor" href="#ecosystem"></a>
+</h2>
+<p>bag is one of several small R packages New Graph Environment builds its reporting on. What it fetches comes from whatever you point it at: the <a href="https://catalogue.data.gov.bc.ca/" class="external-link">BC Data Catalogue</a>, a GeoServer WFS endpoint, or any URL GDAL can open.</p>
+</div>
+<div class="section level2">
+<h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
+</h2>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/citation.html" class="external-link">citation</a></span><span class="op">(</span><span class="st">"bag"</span><span class="op">)</span></span></code></pre></div>
+<p>The package is archived on Zenodo, and the DOI in <code>DESCRIPTION</code> resolves to the record.</p>
 </div>
 <div class="section level2">
 <h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
 </h2>
-<p>MIT</p>
+<p>MIT © New Graph Environment Ltd.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li><a href="https://github.com/NewGraphEnvironment/spacehakr/" class="external-link">Browse source code</a></li>
-<li><a href="https://github.com/NewGraphEnvironment/spacehakr/issues" class="external-link">Report a bug</a></li>
+<li><a href="https://github.com/NewGraphEnvironment/bag/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/NewGraphEnvironment/bag/issues" class="external-link">Report a bug</a></li>
 </ul>
 </div>
 
@@ -286,7 +177,7 @@
 <div class="citation">
 <h2 data-toc-skip>Citation</h2>
 <ul class="list-unstyled">
-<li><a href="authors.html#citation">Citing spacehakr</a></li>
+<li><a href="authors.html#citation">Citing bag</a></li>
 </ul>
 </div>
 
@@ -303,7 +194,7 @@
 <h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
 <li><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental" class="external-link"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="Lifecycle: experimental"></a></li>
-<li><a href="https://github.com/NewGraphEnvironment/spacehakr/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/NewGraphEnvironment/spacehakr/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a></li>
+<li><a href="https://github.com/NewGraphEnvironment/bag/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/NewGraphEnvironment/bag/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a></li>
 </ul>
 </div>
 

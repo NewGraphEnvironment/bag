@@ -11,20 +11,20 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/NewGraphEnvironment/spacehakr/blob/v0.4.2/inst/CITATION)
+[`inst/CITATION`](https://github.com/NewGraphEnvironment/bag/blob/main/inst/CITATION)
 
-Irvine A (2026). *spacehakr: Spatial Analysis, Raster Processing, and
-Geospatial Data Access*. New Graph Environment Ltd.
+Irvine A (2026). *bag: Fetch Public Data and Field Files to Disk*. New
+Graph Environment Ltd.
 [doi:10.5281/zenodo.23524742](https://doi.org/10.5281/zenodo.23524742).
-Version 0.4.2, <https://github.com/NewGraphEnvironment/spacehakr>.
+Version 0.5.0, <https://github.com/NewGraphEnvironment/bag>.
 
-    @Manual{spacehakr,
-      title = {spacehakr: Spatial Analysis, Raster Processing, and Geospatial Data Access},
+    @Manual{bag,
+      title = {bag: Fetch Public Data and Field Files to Disk},
       author = {Allan Irvine},
       organization = {New Graph Environment Ltd.},
       year = {2026},
-      version = {0.4.2},
-      note = {Version 0.4.2},
-      url = {https://github.com/NewGraphEnvironment/spacehakr},
+      version = {0.5.0},
+      note = {Version 0.5.0},
+      url = {https://github.com/NewGraphEnvironment/bag},
       doi = {10.5281/zenodo.23524742},
     }
