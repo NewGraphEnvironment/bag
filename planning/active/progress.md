@@ -142,3 +142,59 @@
 - `devtools::test()`: FAIL 0 | WARN 0 | SKIP 2 | PASS 310. `lintr`: 0. `check`: 0/0/0
 - Next: everything remaining is blocked on Phase 1, which is with the user. 4b needs the new
   URL; 7's release needs 4b; 8 needs the merge
+
+## Session 2026-11-01 (UTC) — naming locked, the layer remover dropped, donor defects reported
+
+- The owner read the intake's names side by side and pushed back on two things I had
+  decided myself. Both pushbacks were right and both changed the branch
+- **magrittr comes out.** Measured across 88 repos: no newer package of ours declares it
+  or uses `%>%` in `R/` at all — 0 of 68 R files in one, 0 of 46, 0 of 49, 0 of 18, 0 of
+  17, 0 of 11. Five older packages declare it, and they are the donors this code came
+  from, so adding it here would have made this the only new-generation package carrying
+  it. First filed as a separate issue, then folded into this branch on the owner's call,
+  because Phase 9's rename opens the same four files
+- The port is smaller than I had judged when I took the dependency: only **two** of the
+  four donated files use the `.` placeholder, and both call `sf::st_coordinates()` twice
+  on the same geometry. One of the other two uses a purrr `.x`, not magrittr's `.`, and
+  the fourth is a plain chain. What made me reverse the call is that the tests now exist:
+  when I chose magrittr they did not, so "a rewrite is where a regression comes from" was
+  true then and is not now
+- **Names finalised (Phase 9).** Three forks went to the owner, all three took the
+  recommendation. The principle: drop prefixes that are organisational (`sp_`, `u_`,
+  `fs_`, `meta_`), keep words that are contractual (`assign`, `import`, `to_geojson`,
+  `refresh`). Twice I shortened a name and lost contract information — `bag_utm` beside
+  `bag_utm_to_sf` reads as either direction, and `bag_geojson` dropped a conversion that
+  is real — and reverted both
+- Measured why the coordinate pair must not be named as a direction pair: they are not
+  inverses. `assign_utm` takes sf and returns the input CRS; `sf_from_utm` takes a plain
+  data frame and returns `crs_return`, default 3005, renaming the geometry column to
+  `geom`. 4326 in, 4326 out of the first, 3005 out of the second
+- **The layer remover is gone (Phase 10).** Badged `superseded` by its donor in favour of
+  `gdalraster::ogr_layer_delete()`, with **zero live callers** org-wide: 11 code-search
+  hits, the only one in consumer code a commented-out line. `gdalraster` is already live
+  in three of our GIS scripts and installed at 2.6.1. 15 exports to 14, `lifecycle` out of
+  Suggests, tests 310 to 292
+- **The donor defects are reported.** Nine were found while porting and only one had been
+  filed; the rest sat here in `progress.md` and the owed list never asked for them. Each
+  was verified still present in the donor's current tree before filing, which corrected
+  one of my own claims: the never-firing geometry guard is in **three** of the
+  fish-passage helpers, not four — the fourth takes a plain data frame and correctly has
+  none. Three issues with the internal package, two with `fpr`
+- **Closed a test gap found on the way.** Every column assertion on the three coordinate
+  functions was `%in% names()` — set membership, blind to a reordering, on functions whose
+  columns callers write to disk, and which the magrittr rewrite touches. Measured the
+  order first and found the three are **inconsistent with each other**: two place their
+  columns before the geometry column because they end on `dplyr::select()` calls, the
+  third places its after because it has none. Pinned as they are, not reconciled
+- A mutation check on those assertions came back **green** and was not trusted: swapping
+  `mutate()` for `[[<-` changes nothing, because the trailing `select()` normalises
+  geometry to last either way. A semantic no-op, not a weak test. Two `relocate()` edits
+  took 4 tests red
+- Removed a private-repo issue reference I had written into this file. This repo is public
+  and `planning/` is committed, so it pointed nowhere for an outside reader
+- Commits: `5415bba` (names, drop and magrittr decisions), `533bd4b` (the drop),
+  `7cadb5f` (column order). `devtools::test()`: FAIL 0 | WARN 0 | SKIP 2 | PASS 298.
+  `lintr`: 0
+- Next: Phase 9's rename with the magrittr removal folded in, then `/code-check branch`.
+  Phase 1 — the repository rename — is still with the owner, and 4b, 7 and 8 remain
+  blocked on it
