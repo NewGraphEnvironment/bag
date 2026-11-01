@@ -513,6 +513,49 @@ does half the work, and is immune to the data-masking trap a bare variable insid
 - [ ] PWF checkboxes match landed work
 - [ ] `/planning-archive` on completion
 
+## The merge sequence, decided 2026-11-01
+
+Five steps, not three, and two of the three merges deliberately cut no release. Run in
+this order from each repo's checkout.
+
+1. **`/gh-pr-merge 48 no-release`** in `ngr`.
+   [ngr PR #48](https://github.com/NewGraphEnvironment/ngr/pull/48) pins
+   `spacehakr@v0.4.2`. `no-release` because the release would be `v0.0.6` whose only
+   substance is a stopgap the retirement issue removes, and `ngr` is Zenodo-archived
+   (`Config/DOI: 10.5281/zenodo.23524733`), so it would mint a DOI for a dependency pin.
+   Nothing installs `ngr` by tag — both consumers resolve it from the default branch — so
+   the pin takes effect without one. `main` was otherwise clean: one bot commit since
+   `v0.0.5`.
+2. **Re-run `rfp`'s failed checks and wait for green.** They will *not* re-run on their
+   own: GitHub does not re-trigger a PR's CI when a dependency's default branch changes,
+   and `rfp` resolves `ngr` from its default branch. Merging while red would merge a PR
+   whose CI never proved the fix, and that run is the independent confirmation of the
+   local `pak::lockfile_create("deps::.")` test.
+3. **`/gh-pr-merge 419 no-release`** in `rfp`.
+   [rfp PR #419](https://github.com/NewGraphEnvironment/rfp/pull/419) pins the same tag.
+   `no-release` is not a judgment call here: `main` carries three unreleased commits since
+   `v0.93.0`, including [rfp PR #413](https://github.com/NewGraphEnvironment/rfp/pull/413),
+   which moved the R workflows to the shared `flows` repo. A release would cut `v0.93.1`
+   with NEWS describing someone else's work — the case `no-release` is documented for.
+4. **`/gh-pr-merge 35`** in `bag`, with full release bookkeeping.
+   The skill detects the bump already landed on the branch (`SKIP_BUMP=1`), so it does
+   **not** bump again to 0.5.1 — it stamps the release date, tags `v0.5.0` and cuts the
+   GitHub release. Checked in the skill's own step 6 before planning this.
+5. **Watch the post-merge CI and the pkgdown deploy**, then confirm a new Zenodo version
+   appeared under the concept DOI.
+
+### Zenodo needs no relinking
+
+Checked rather than assumed. `invenio_github`'s `Repository.get()` queries `github_id`
+first and only falls back to the name; the release receiver passes the numeric id from
+the webhook payload, GitHub keeps that id across a rename, and `sync()` overwrites the
+stored name from GitHub. The webhook is still on the repo and active. Zenodo's own help
+pages say nothing about renames either way, so this is read from the source, not from a
+rename test — but the failure mode is cheap and visible: no new version appears, and it
+can be uploaded by hand to the same concept record. The concept DOI does not change.
+
+**The GitHub release is what fires Zenodo, not the tag.**
+
 ## Open at the PR, and why
 
 - **The merge is the owner's**, so the tag, the GitHub release and the post-merge CI
