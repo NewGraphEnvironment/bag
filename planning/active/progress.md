@@ -299,3 +299,45 @@
 - Commits: `0226823` (Phase 9 + 11), `752fa1d` (round 1's nine), `fc244d8` (round 2's six)
 - Next: round 3's mechanism and enumeration. Phase 1 — the repository rename — is still
   with the owner, and 4b, 7's release and 8 remain blocked on it
+
+## Session 2026-11-01 (UTC) — round 3 named the mechanism, and it is closed by enumeration
+
+- Round 3's job was the **mechanism**, not more instances, because round 2 had found
+  defects inside round 1's fixes. It named one: *a fix lands on the caller the symptom
+  arrived through, and the sibling over the same container keeps the behaviour.* That
+  pairing is this package's shape — eleven functions ported from two donors at different
+  times, several pairs acting on one container with nothing comparing them
+- **The mechanism had already reproduced inside its own remedy.** Round 2 extracted
+  `.bag_crs_unusable()` and wired it into one of two consumers. That is why a quiet round
+  could not have closed this
+- Four findings, all reproduced, every one a cell where one member of a pair handled the
+  input and its sibling did not:
+  - `bag_gpkg_to_geojson()` refused a GeoPackage carrying a QGIS `layer_styles` table —
+    the use case round 2 had just restored for `bag_gpkg_refresh()` — printing a remedy
+    ("set a CRS on it") that cannot be run on a style table
+  - `bag_sf_from_utm()` could not read `bag_assign_utm()`'s own documented output. Round
+    2 taught the writer to emit NA rows; the reader aborted from inside sf naming a
+    `group_split()` index. It had no guard on the zone column's **values** at all
+  - `bag_assign_latlong()` was silent on the row its sibling warns about
+  - `bag_gpkg_refresh()` was the one GeoPackage consumer not reaching `.bag_crs_unusable()`
+- Fixed by extracting the property rather than patching each caller: `.bag_gpkg_layers()`
+  and `.bag_warn_unplaced()` are new, and `.bag_crs_unusable()` now reaches all four of
+  its consumers
+- **The enumeration that ended the loop is mechanical**, from `utils::getParseData()` over
+  `R/` rather than from recall. It surfaced one cell the reviewer had not: both assigners
+  read a CRS without the check their siblings make. Closed, and the enumeration re-run
+  clean. One raw `st_layers()` call remains, in `bag_layers()`, deliberately — reporting
+  what a data source contains is that function's whole job — and the helper records why
+- **The cli plural-quantity class is a test now, not a sweep.** A one-time enumeration
+  closed it and new code reopened it, twice. `test-cli-plurals.R` parses `R/` and checks
+  every marker has a quantity in its own string; dropping a `cli::qty()` takes it red
+- Two traps worth keeping: `st_sf(df, geom = sfc)` splices the frame and returns one row
+  per **column** (a 1-row 4-column frame came back as 4 rows), and `cli::qty()` takes the
+  quantity itself rather than a length, so `qty(rows_bad)` on row 2 read as plural
+- `devtools::test()`: FAIL 0 | WARN 0 | SKIP 2 | PASS 406, from 298 at the session start.
+  `lintr`: 0. `check(vignettes = FALSE)`: 0/0/0. 26 mutations across the three rounds,
+  all red
+- Commit: `2c760a6`
+- Next: Phase 1 — the repository rename — is still with the owner, and 4b, 7's release
+  and 8 remain blocked on it. `NEWS.md` and the `CLAUDE.md` above-marker rewrite are
+  drafted and ready to apply the moment it lands

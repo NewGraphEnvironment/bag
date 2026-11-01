@@ -491,9 +491,13 @@ does half the work, and is immune to the data-masking trap a bare variable insid
 
 - [x] Tests pass — FAIL 0 | WARN 0 | SKIP 2 | PASS 377, `lintr` 0,
       `check(vignettes = FALSE)` 0/0/0
-- [ ] `/code-check` clean (each commit, or once over the branch with `/code-check branch`).
-      Round 1: 9 findings, all fixed. Round 2: 6, **two inside round 1's fixes**, all
-      fixed — so the loop ends on an enumeration, not on a quiet round. Round 3 running
+- [x] `/code-check` clean (once over the branch with `/code-check branch`). Three rounds,
+      19 findings, all reproduced and all fixed; 26 mutations red. Round 1: 9. Round 2: 6,
+      **two inside round 1's fixes** — which is what put the loop on the enumeration rule.
+      Round 3: 4, plus the mechanism (*a fix lands on the caller the symptom arrived
+      through, and the sibling over the same container keeps the behaviour*) and the
+      mechanical enumeration that ends it. Two of the 19 were data loss, one of them a
+      regression introduced by Phase 11's rewrite
 - [ ] PWF checkboxes match landed work
 - [ ] `/planning-archive` on completion
 
