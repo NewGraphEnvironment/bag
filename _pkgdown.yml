@@ -1,4 +1,25 @@
-url: http://www.newgraphenvironment.com/spacehakr/
+url: http://www.newgraphenvironment.com/bag/
 template:
   bootstrap: 5
 
+reference:
+- title: Fetch
+  desc: >
+    Bring data onto disk — from a URL, from a GeoServer WFS endpoint, or from a GPS
+    unit's GPX files.
+  contents:
+  - has_concept("download")
+- title: BC Data Catalogue
+  desc: >
+    Find a catalogue layer and describe its columns, then download it to a GeoPackage or
+    read it into R.
+  contents:
+  - has_concept("catalogue")
+- title: Files
+  desc: Inspect, convert and back up spatial files.
+  contents:
+  - has_concept("files")
+- title: Coordinates
+  desc: Move between geometry and UTM or latitude/longitude columns.
+  contents:
+  - has_concept("coordinates")

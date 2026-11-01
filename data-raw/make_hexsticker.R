@@ -1,4 +1,4 @@
-# Script to generate hex sticker for spacehakr package
+# Script to generate hex sticker for bag package
 # Uses hexSticker package to create a simple black and white design
 # with NG logo icon and package name
 
@@ -14,10 +14,10 @@ if (!requireNamespace("hexSticker", quietly = TRUE)) {
 library(hexSticker)
 
 # Configuration parameters (easy to tweak)
-logo_url <- "https://raw.githubusercontent.com/NewGraphEnvironment/new_graphiti/main/assets/logos/logo_newgraph/WHITE/PNG/nge-icon_white.png"
+logo_url <- "https://raw.githubusercontent.com/NewGraphEnvironment/new_graphiti/main/assets/logos/logo_newgraph/WHITE/PNG/nge-icon_white.png" # nolint: line_length_linter. A URL cannot be wrapped.
 logo_file <- "data-raw/nge-icon_white.png"
 output_file <- "man/figures/logo.png"
-package_name <- "spacehakr"
+package_name <- "bag"
 
 # Download the logo if it doesn't exist locally
 if (!file.exists(logo_file)) {

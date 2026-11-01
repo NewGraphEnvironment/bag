@@ -1,0 +1,105 @@
+test_that("bag_layers returns layer information from GeoPackage", {
+  skip_if_not_installed("sf")
+
+  # Use existing test data
+  path <- system.file("extdata/poly.gpkg", package = "bag")
+
+  result <- bag_layers(path)
+
+  expect_s3_class(result, "data.frame")
+  expect_true("name" %in% names(result))
+  expect_true("geomtype" %in% names(result))
+  expect_true(nrow(result) > 0)
+})
+
+test_that("bag_layers identifies geometry type correctly", {
+  skip_if_not_installed("sf")
+
+  path <- system.file("extdata/poly.gpkg", package = "bag")
+
+  result <- bag_layers(path)
+
+  # poly.gpkg should contain polygon geometry
+  expect_true(any(grepl("POLYGON", result$geomtype, ignore.case = TRUE)))
+})
+
+test_that("bag_layers handles GeoPackage with multiple layers", {
+  skip_if_not_installed("sf")
+
+  # Create temp GeoPackage with multiple layers
+  tmpfile <- tempfile(fileext = ".gpkg")
+  on.exit(unlink(tmpfile), add = TRUE)
+
+  # Create two simple sf objects
+  pts <- sf::st_sf(
+    id = 1:3,
+    geometry = sf::st_sfc(
+      sf::st_point(c(0, 0)),
+      sf::st_point(c(1, 1)),
+      sf::st_point(c(2, 2)),
+      crs = 4326
+    )
+  )
+
+  poly <- sf::st_sf(
+    id = 1,
+    geometry = sf::st_sfc(
+      sf::st_polygon(list(matrix(c(0, 0, 1, 0, 1, 1, 0, 1, 0, 0), ncol = 2, byrow = TRUE))),
+      crs = 4326
+    )
+  )
+
+  sf::st_write(pts, tmpfile, layer = "points", quiet = TRUE)
+  sf::st_write(poly, tmpfile, layer = "polygons", quiet = TRUE, append = TRUE)
+
+  result <- bag_layers(tmpfile)
+
+  expect_equal(nrow(result), 2)
+  expect_true("points" %in% result$name)
+  expect_true("polygons" %in% result$name)
+})
+
+test_that("bag_layers returns NA for layers with no geometry", {
+  skip_if_not_installed("sf")
+
+  # Create temp GeoPackage with empty layer
+  tmpfile <- tempfile(fileext = ".gpkg")
+  on.exit(unlink(tmpfile), add = TRUE)
+
+  # Create an empty sf object (0 features)
+  empty_sf <- sf::st_sf(
+    id = integer(0),
+    geometry = sf::st_sfc(crs = 4326)
+  )
+
+  sf::st_write(empty_sf, tmpfile, layer = "empty", quiet = TRUE)
+
+  result <- bag_layers(tmpfile)
+
+  # Layer with 0 features returns NA for geomtype
+  # (tryCatch in bag_layers returns NA_character_ when geom length is 0)
+  expect_equal(nrow(result), 1)
+  expect_equal(result$name[1], "empty")
+  expect_true(is.na(result$geomtype[1]))
+})
+
+test_that("bag_layers errors on non-existent file", {
+  skip_if_not_installed("sf")
+
+  expect_error(
+    bag_layers("nonexistent.gpkg"),
+    # sf::st_layers will error on missing file
+    class = "error"
+  )
+})
+
+test_that("bag_layers does not include driver column", {
+  skip_if_not_installed("sf")
+
+  path <- system.file("extdata/poly.gpkg", package = "bag")
+
+  result <- bag_layers(path)
+
+  # Driver column should be removed per function docs
+  expect_false("driver" %in% names(result))
+})

@@ -1,4 +1,4 @@
-^spacehakr\.Rproj$
+^bag\.Rproj$
 ^\.Rproj\.user$
 ^_pkgdown\.yml$
 ^docs$
@@ -10,5 +10,7 @@
 ^README\.Rmd$
 ^\.git$
 ^planning$
-^vignettes/articles$
 ^CITATION\.cff$
+^\.lintr$
+^\.claude$
+^README\.html$

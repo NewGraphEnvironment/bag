@@ -1,19 +1,19 @@
-# ------------------------------------------------
-# CITATION.cff file created with {cffr} R package
+# --------------------------------------------
+# CITATION file created with {cffr} R package
 # See also: https://docs.ropensci.org/cffr/
-# ------------------------------------------------
+# --------------------------------------------
  
 cff-version: 1.2.0
-message: If you use spacehakr, please cite it by its DOI, 10.5281/zenodo.23524742.
+message: If you use bag, please cite it by its DOI, 10.5281/zenodo.23524742.
 type: software
 license: MIT
-title: 'spacehakr: Spatial Analysis, Raster Processing, and Geospatial Data Access'
-version: 0.4.2
+title: 'bag: Fetch Public Data and Field Files to Disk'
+version: 0.5.0
 doi: 10.5281/zenodo.23524742
-abstract: Tools for spatial analysis, raster processing, and geospatial data access.
-  Includes functions for GDAL/OpenDroneMap command building, GeoServer WFS downloads,
-  STAC catalog queries, spatial joins, and raster operations. Extracted from the ngr
-  package's ngr_spk_* function family.
+abstract: Fetches public spatial data and field files and saves them to disk. Sources
+  include arbitrary URLs read through GDAL virtual filesystems, the BC Data Catalogue,
+  and GeoServer WFS endpoints. Also reads GPX files, converts and inspects GeoPackage
+  layers, and backs up field data files.
 authors:
 - family-names: Irvine
   given-names: Allan
@@ -21,25 +21,25 @@ authors:
   orcid: https://orcid.org/0000-0002-3495-2128
   affiliation: New Graph Environment Ltd.
 preferred-citation:
-  title: 'spacehakr: Spatial Analysis, Raster Processing, and Geospatial Data Access'
+  title: 'bag: Fetch Public Data and Field Files to Disk'
   authors:
   - family-names: Irvine
     given-names: Allan
     email: al@newgraphenvironment.com
     orcid: https://orcid.org/0000-0002-3495-2128
     affiliation: New Graph Environment Ltd.
-  version: 0.4.2
-  date-released: '2026-10-31'
-  url: https://newgraphenvironment.github.io/spacehakr/
-  repository-code: https://github.com/NewGraphEnvironment/spacehakr
+  version: 0.5.0
+  date-released: '2026-11-01'
+  url: http://www.newgraphenvironment.com/bag/
+  repository-code: https://github.com/NewGraphEnvironment/bag
   license: MIT
   doi: 10.5281/zenodo.23524742
   type: software
   publisher:
     name: New Graph Environment Ltd.
-repository-code: https://github.com/NewGraphEnvironment/spacehakr
-url: https://newgraphenvironment.github.io/spacehakr/
-date-released: '2026-10-31'
+repository-code: https://github.com/NewGraphEnvironment/bag
+url: http://www.newgraphenvironment.com/bag/
+date-released: '2026-11-01'
 contact:
 - family-names: Irvine
   given-names: Allan

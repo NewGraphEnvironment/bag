@@ -1,13 +1,20 @@
 # Global variable declarations for R CMD check
 # These are column names used in NSE (non-standard evaluation) contexts
 utils::globalVariables(c(
-  ".data",
+  "col_name",
+  "column_comments",
+  "description",
   "driver",
-  "layer_name",
+  "epsg",
+  "format",
+  "id",
+  "id_dataset",
+  "id_package",
+  "local_col_type",
   "name",
-  "time_exported"
+  "object_name",
+  "object_name_idx",
+  "package_name",
+  "url",
+  "url_browser"
 ))
-
-#' @importFrom stats setNames
-#' @keywords internal
-NULL

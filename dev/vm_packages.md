@@ -1,4 +1,4 @@
-# R Packages Required for spacehakr Development
+# R Packages Required for bag Development
 
 ## Core Dependencies (DESCRIPTION Imports)
 These must be installed for the package to work:

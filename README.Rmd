@@ -13,158 +13,123 @@ knitr::opts_chunk$set(
 )
 ```
 
-# spacehakr <img src="man/figures/logo.png" align="right" height="139" alt="spacehakr hex sticker" />
+# bag <img src="man/figures/logo.png" align="right" height="139" alt="bag hex sticker" />
 
 <!-- badges: start -->
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![R-CMD-check](https://github.com/NewGraphEnvironment/spacehakr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/NewGraphEnvironment/spacehakr/actions/workflows/R-CMD-check.yaml)
+[![R-CMD-check](https://github.com/NewGraphEnvironment/bag/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/NewGraphEnvironment/bag/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-Spatial analysis and geospatial data tools for R — raster processing, WFS access, GDAL command building, spatial joins, and STAC catalog queries.
+bag fetches public spatial data and field files, and puts them on disk where the rest of
+your work can reach them: a layer behind a URL, a BC Data Catalogue record, a GeoServer
+WFS endpoint, or the GPX files on a GPS unit back from the field. It then does the small
+jobs that follow — convert a GeoPackage to GeoJSON, list what a data source holds, back a
+file up before you change it, and move point data between geometry and UTM or
+latitude/longitude columns.
+
+The point is reproducibility. A fish-passage assessment or a restoration design rests on
+data somebody downloaded once; a script that fetches it again, to a named path, with the
+coordinate columns regenerated from the geometry rather than typed, is the difference
+between a report you can rebuild next year and one you cannot.
+
+Functions change between releases while the package is experimental — see
+[`NEWS.md`](https://github.com/NewGraphEnvironment/bag/blob/main/NEWS.md), and pin a
+release if you need one to hold still.
 
 ## Installation
 
 ```r
 # install.packages("pak")
-pak::pkg_install("NewGraphEnvironment/spacehakr")
+pak::pkg_install("NewGraphEnvironment/bag")
+
+# or pin a release -- see NEWS.md for the tags
+pak::pkg_install("NewGraphEnvironment/bag@vX.Y.Z")
 ```
 
-## Examples
+`bag_url()` shells out to GDAL's `ogr2ogr` and aborts if it is not on the `PATH`. Every
+other function uses GDAL through sf, which bundles its own. On macOS, `brew install gdal`;
+on Ubuntu, `apt install gdal-bin`.
 
-```{r setup}
-library(spacehakr)
-library(sf)
-library(terra)
+## What it looks like
+
+Ask a data source what it holds, before reading any of it:
+
+```{r layers}
+library(bag)
+
+gpkg <- system.file("extdata", "poly.gpkg", package = "bag")
+
+# it also returns each layer's full CRS, which is a WKT block -- trimmed here
+bag_layers(gpkg)[, c("name", "geomtype", "features", "fields")]
 ```
 
-### Inspect Layers in a GeoPackage
+Write the UTM zone, easting and northing a field form expects, derived from the geometry
+rather than typed in. Rows come back ordered by zone. The fourth site below was entered
+before the GPS had a fix, so it has no geometry — it keeps its attributes and gets `NA`
+coordinates rather than being dropped. Both warnings are the function saying what it did:
 
-Query layer names and geometry types from any vector data source:
-
-```{r layer-info}
-# Get path to bundled test data
-gpkg_path <- system.file("extdata", "poly.gpkg", package = "spacehakr")
-
-spk_layer_info(gpkg_path)
-```
-
-### Compute Combined Extent from Multiple Rasters
-
-Calculate the union bounding box across multiple raster files:
-
-```{r rast-ext}
-# Get paths to bundled test rasters
-rast_files <- c(
-  system.file("extdata", "test1.tif", package = "spacehakr"),
-  system.file("extdata", "test2.tif", package = "spacehakr")
+```{r utm}
+sites <- sf::st_sf(
+  site = c("skeena", "bulkley", "peace", "no_fix_yet"),
+  geometry = sf::st_sfc(
+    sf::st_point(c(-128.5, 54.5)),
+    sf::st_point(c(-126.9, 54.8)),
+    sf::st_point(c(-121.3, 56.2)),
+    sf::st_point(),
+    crs = 4326
+  )
 )
 
-# Get combined extent
-bbox <- spk_rast_ext(rast_files)
-bbox
+bag_assign_utm(sites)
 ```
 
-### Spatial Joins with Filtering
-
-Join points to polygons with optional column selection and filtering:
-
-```{r spatial-join}
-# Load bundled test data
-points <- st_read(
-  system.file("extdata", "points.gpkg", package = "spacehakr"), 
-  quiet = TRUE
-)
-polygons <- st_read(
-  system.file("extdata", "poly.gpkg", package = "spacehakr"), 
-  quiet = TRUE
-)
-
-# Join points to polygons, returning specific columns
-result <- spk_join(
-  target_tbl = points,
-  mask_tbl = polygons,
-  target_col_return = "id",
-  mask_col_return = "attribute_string"
-)
-
-result
-```
-
-### Build GDAL Warp Commands
-
-Generate GDAL command strings for raster reprojection:
-
-```{r gdalwarp}
-# Build a gdalwarp command (interactive = TRUE returns full command string)
-input_file <- system.file("extdata", "test1.tif", package = "spacehakr")
-
-cmd <- spk_gdalwarp(
-  path_in = input_file,
-  path_out = file.path(tempdir(), "output.tif"),
-  t_srs = "EPSG:3005",
-  target_resolution = c(10, 10),
-  resampling = "bilinear",
-  interactive = TRUE
-)
-
-cat(cmd)
-```
-
-### Download from GeoServer WFS
-
-Fetch vector data from BC's GeoServer (requires network access):
+Fetching is the other half, and it needs the network, so it is not run here:
 
 ```r
-# Download contour lines within a bounding box
-contours <- spk_geoserv_dlv(
-  url_geoserver = "https://openmaps.gov.bc.ca/geo/pub/ows",
-  dir_out = tempdir(),
-  layer_name_raw = "pub:WHSE_BASEMAPPING.TRIM_CONTOUR_LINES",
-  bbox = c(-123.5, 48.0, -123.0, 48.5),
-  crs = 4326
+# a layer from the BC Data Catalogue, clipped to a mask, straight to a GeoPackage
+bag_bcdc(
+  bcdata_record_id = "pscis-assessments",
+  path_gpkg = "data/pscis.gpkg",
+  mask = aoi
+)
+
+# anything GDAL can open behind a URL
+bag_url(
+  urls = "https://example.org/layers/streams.geojson",
+  path_gpkg = "data/streams.gpkg"
+)
+
+# the GPX files on a GPS unit, into one GeoPackage
+bag_gpx_import(
+  dir_out = "data/gps",
+  layer_output_name = "2026_field",
+  gpkg_name = "gps_2026"
 )
 ```
 
-### Query STAC Catalogs
+## Learn more
 
-Calculate spectral indices from STAC items (requires `rstac` and network access):
+Every exported function is documented at
+<http://www.newgraphenvironment.com/bag/reference/>, with the reference index grouped by
+what the function is for: fetching, the BC Data Catalogue, files, and coordinates. The
+four coordinate and layer-listing functions carry examples that run; the other ten are
+`\dontrun{}`, because they reach the network or write to disk.
+
+## Ecosystem
+
+bag is one of several small R packages New Graph Environment builds its reporting on.
+What it fetches comes from whatever you point it at: the
+[BC Data Catalogue](https://catalogue.data.gov.bc.ca/), a GeoServer WFS endpoint, or any
+URL GDAL can open.
+
+## Citation
 
 ```r
-library(rstac)
-
-# Query Landsat data
-items <- stac("https://planetarycomputer.microsoft.com/api/stac/v1") |>
-  stac_search(
-    collections = "landsat-c2-l2",
-    bbox = c(-123.5, 48.0, -123.0, 48.5),
-    datetime = "2023-06-01/2023-08-31"
-  ) |>
-  post_request() |>
-  items_sign(sign_fn = sign_planetary_computer())
-
-# Calculate NDVI from the first item
-ndvi <- spk_stac_calc(
-  feature = items$features[[1]],
-  asset_a = "red",
-  asset_b = "nir08",
-  calc = "ndvi"
-)
+citation("bag")
 ```
 
-## Function Reference
-
-| Function | Description |
-|----------|-------------|
-| `spk_layer_info()` | List layers and geometry types in vector sources |
-| `spk_rast_ext()` | Compute combined extent from multiple rasters |
-| `spk_join()` | Spatial join with filtering and column selection |
-| `spk_gdalwarp()` | Build GDAL warp commands |
-| `spk_geoserv_dlv()` | Download from GeoServer WFS |
-| `spk_stac_calc()` | Calculate indices from STAC items |
-| `spk_odm()` | Build OpenDroneMap commands |
-| `spk_res()` | Query raster resolution |
-| `spk_rast_rm_empty()` | Remove empty rasters from file lists |
+The package is archived on Zenodo, and the DOI in `DESCRIPTION` resolves to the record.
 
 ## License
 
-MIT
+MIT © New Graph Environment Ltd.

@@ -1,34 +1,43 @@
-# spacehakr
+# bag
 
-R package for spatial analysis, raster processing, and geospatial data access. Extracted from the `ngr_spk_*` function family in the [ngr](https://github.com/NewGraphEnvironment/ngr) package.
+R package that fetches public spatial data and field files and saves them to disk: layers
+read through GDAL virtual filesystems, the BC Data Catalogue, GeoServer WFS endpoints, and
+a GPS unit's GPX files. It also converts, inspects and backs up the GeoPackages that come
+out, and moves point data between geometry and UTM or latitude/longitude columns.
 
 ## Repository Context
 
-**Repository:** NewGraphEnvironment/spacehakr
+**Repository:** NewGraphEnvironment/bag
 **Primary Language:** R
 **License:** MIT
-**URL:** http://www.newgraphenvironment.com/spacehakr/
+**URL:** http://www.newgraphenvironment.com/bag/
 
-## Migration from ngr
+## History
 
-Functions are renamed from `ngr_spk_*` to `spk_*`:
+The package began as the `ngr_spk_*` family extracted from
+[ngr](https://github.com/NewGraphEnvironment/ngr). Of those twelve functions, two are still
+here under new names; the other ten were spatial and drone-imagery helpers with no caller
+in this package's namespace, and were deleted in the rename release. **`ngr` still exports its own
+deprecating forwarders for all twelve**, whose bodies call `spacehakr::spk_*()`, and it
+carries `spacehakr` in `Imports:`. It is therefore pinned to
+`NewGraphEnvironment/spacehakr@v0.4.2` — the last release before the rename — and keeps
+installing a package that still has them, so code calling `ngr_spk_*` is unaffected.
+Retiring those forwarders is tracked in `ngr`.
 
-| ngr (source) | spacehakr (target) | Purpose |
-|---|---|---|
-| `ngr_spk_gdalwarp()` | `spk_gdalwarp()` | GDALWarp command argument builder |
-| `ngr_spk_geoserv_dlv()` | `spk_geoserv_dlv()` | Download vector from GeoServer WFS |
-| `ngr_spk_join()` | `spk_join()` | Spatial join with optional mask filtering |
-| `ngr_spk_layer_info()` | `spk_layer_info()` | Summarise layers/geometry types in data source |
-| `ngr_spk_odm()` | `spk_odm()` | Docker command builder for OpenDroneMap |
-| `ngr_spk_poly_to_points()` | `spk_poly_to_points()` | Generate regular points inside polygons |
-| `ngr_spk_q_layer_info()` | `spk_q_layer_info()` | Extract layer info from QGIS project |
-| `ngr_spk_rast_ext()` | `spk_rast_ext()` | Combined extent from multiple rasters |
-| `ngr_spk_rast_not_empty()` | `spk_rast_not_empty()` | Check if raster has non-zero data |
-| `ngr_spk_rast_rm_empty()` | `spk_rast_rm_empty()` | Remove empty raster files |
-| `ngr_spk_res()` | `spk_res()` | Extract raster resolution |
-| `ngr_spk_stac_calc()` | `spk_stac_calc()` | Retrieve/calculate spectral indices from STAC |
+Eleven more functions came the other way in the same release, from two older first-party
+packages whose subject is reporting rather than fetching; one was then dropped again as
+superseded upstream, so ten landed. Those packages still hold their own copies, so
+nothing calling the old names is broken; deprecating forwarders are tracked in each of
+them rather than written yet.
 
-Tests transfer with the same rename pattern.
+Names changed twice on the way, so [`NEWS.md`](NEWS.md) is the mapping to read:
+
+| up to the rename | here now |
+|---|---|
+| `spk_source_url()` | `bag_url()` |
+| `spk_source_bcdata()` | `bag_bcdc()` |
+| `spk_geoserv_dlv()` | `bag_wfs()` |
+| `spk_layer_info()` | `bag_layers()` |
 
 ## Build & Test Commands
 
@@ -42,16 +51,35 @@ devtools::install()
 - Prefer `devtools::test()` during development - it's faster
 - Only run `devtools::check()` when preparing for release or CI
 - Always skip vignettes during checks (`vignettes = FALSE`)
+- **Reinstall before linting or running the suite.** Both `lintr::lint_package()` and
+  `devtools::test()` resolve against the *installed* package, so a stale install reports
+  lints and failures that do not belong to the source tree. A rename makes this acute:
+  `no visible binding` for a name already in `globalVariables()` is the tell
 
 ## Function Naming
 
-All exported functions use prefix `spk_`:
-- `spk_rast_*` - Raster operations
-- `spk_gdalwarp()`, `spk_odm()` - External tool command builders (they return argument
-  vectors; they do not execute)
-- `spk_geoserv_*`, `spk_stac_*`, `spk_source_*` - Remote data access. `spk_source_*`
-  fetchers *do* execute — `spk_source_url()` shells out to `ogr2ogr`
-- `spk_join()`, `spk_poly_to_points()`, `spk_layer_info()` - Vector/spatial operations
+All exported functions use the prefix `bag_`, and the stem after it names the source or the
+subject rather than the package the function came from:
+
+- `bag_url()`, `bag_wfs()`, `bag_gpx_import()` — bring data in. `bag_url()` shells out to
+  `ogr2ogr`
+- `bag_bcdc*()` — the BC Data Catalogue. `bcdc_` is the prefix the upstream `bcdata`
+  package uses itself. `bag_bcdc()` downloads to a GeoPackage, `bag_bcdc_read()` reads into
+  memory, `bag_bcdc_index()` and `bag_bcdc_cols()` are the metadata lookups
+- `bag_gpkg_*()`, `bag_layers()`, `bag_backup()` — operate on files already in hand
+- `bag_assign_*()`, `bag_sf_from_utm()` — coordinate columns
+- Internal helpers are dotted: `.bag_ogr2ogr()`, `.bag_chk_sf_point()`, `.bag_bcdc_schtab()`
+  and the rest. The one exception is `stderr_tail()` in `R/bag_url.R`, which predates the
+  convention
+
+**Drop prefixes that are organisational; keep words that are contractual.** `sp_`, `u_`,
+`fs_` and `meta_` were a donor package's filing system and encode nothing a caller needs.
+`assign`, `import`, `to_geojson` and `refresh` say what goes in, what comes out, or whether
+the caller's file survives — `bag_gpkg_refresh()` is not called `backup` because
+`write_back_to_path = TRUE` overwrites its source. Twice during review a name was shortened
+and lost contract information (`bag_utm` beside `bag_utm_to_sf` reads as either direction;
+`bag_geojson` dropped a conversion that is real) and both were reverted. "Tight" has a
+floor, and the floor is the contract.
 
 ## Architecture
 
@@ -59,7 +87,8 @@ All exported functions use prefix `spk_`:
 R/                  # Function source files, one function per file
 tests/testthat/     # testthat tests, one test file per function
 man/                # Generated by roxygen2 (never edit manually)
-vignettes/          # Long-form documentation
+inst/extdata/       # Test fixtures. Used by the tests and the README; no Rd example
+                    # reads them yet, because every @examples block is \dontrun{}
 data-raw/           # Scripts for generating package data (hex sticker, etc.)
 dev/                # Development scripts (not in package)
 ```
@@ -67,33 +96,44 @@ dev/                # Development scripts (not in package)
 ## Key Dependencies
 
 - **sf** - Vector spatial data (simple features)
-- **terra** - Raster operations
+- **bcdata** - BC Data Catalogue queries
 - **chk** - Argument validation (`chk_string()`, `chk_flag()`, etc.)
 - **cli** - User messaging (`cli_abort()`, `cli_alert_success()`)
-- **dplyr/purrr/stringr** - Data wrangling
+- **dplyr/purrr/stringr/tibble** - Data wrangling
+- **rlang** - `:=` and `.data` in the data-masked pipelines
 - **fs** - File system operations
 - **glue** - String interpolation
-- **httr/curl** - HTTP requests
-- **xml2** - XML parsing (QGIS project files)
+- **httr2** - HTTP requests (not `httr`, which is used nowhere)
+- **janitor/lubridate/readr** - Column cleaning, GPX timestamps, csv backups
 
-Vignette-only packages go in Suggests (e.g., rstac, leaflet, mapview).
+`magrittr` is **not** a dependency, deliberately: no newer package of ours declares it or
+uses `%>%` in `R/`. Four of the eleven donated functions arrived with magrittr
+pipelines and were rewritten to `|>` on the way in.
+
+Vignette-only packages go in Suggests.
 
 ## Documentation Style
 
 - Roxygen2 with markdown enabled (`Roxygen: list(markdown = TRUE)`)
-- `@family` on every exported function, **topical not universal** — the tags in use are
-  `raster`, `vector`, `download`, `command-builder`, `stac`, `qgis`, `geoserver`. An
-  earlier version of this file claimed a single `@family spacehakr`; the code has never
-  done that.
+- `@family` on every exported function, **topical not universal** — the four tags in use
+  are `download` (3), `catalogue` (4), `files` (4) and `coordinates` (3). An earlier
+  version of this file claimed a single `@family spacehakr`; the code has never done that
+- `_pkgdown.yml`'s `reference:` section groups by `has_concept()`, so a new export is
+  indexed by its `@family` tag and nothing else has to be edited. Run
+  `pkgdown::check_pkgdown()` after adding or removing an export: an uncovered export is an
+  **error**, and it surfaces in CI after the PR is already open
 - `@importFrom` for all external functions (explicit, never `@import`)
 - `@examples` with `\dontrun{}` for slow/network examples
-- `@seealso` for related functions
+- `@seealso` for related functions. Say what the other function does, not that it is the
+  inverse, unless it is: `bag_assign_utm()` and `bag_sf_from_utm()` look like a pair and
+  are not one — different returned CRS, different geometry column name
 
 ## Code Quality Standards
 
 ### lintr
 
-Use lintr for static analysis. Follow the default tidyverse style with:
+Use lintr for static analysis. `.lintr` carries the config; follow the default tidyverse
+style with:
 - Line length max 120 characters
 - snake_case for all names
 - No assignment with `=` (use `<-`)
@@ -101,7 +141,7 @@ Use lintr for static analysis. Follow the default tidyverse style with:
 ### DRY (Don't Repeat Yourself)
 
 - Extract shared logic into internal helpers (not exported, no `@export`)
-- Name internal helpers with a leading dot or descriptive name without `spk_` prefix
+- Name internal helpers with a leading dot: `.bag_chk_sf_point()`
 - If the same pattern appears 3+ times, factor it out
 
 ### YAGNI (You Aren't Gonna Need It)
@@ -113,10 +153,12 @@ Use lintr for static analysis. Follow the default tidyverse style with:
 
 ### KISS (Keep It Simple)
 
-- One function per file, named to match (`spk_join.R` contains `spk_join()`)
+- One function per file, named to match (`bag_url.R` contains `bag_url()`)
 - Flat control flow preferred over deeply nested logic
 - Early returns for guard clauses
 - Pipe chains (`|>`) for data transformation, not for side effects
+- Inject a local value into a data-masked verb with `!!`, never a bare name: inside
+  `dplyr::mutate()` a column of that name wins over the local
 
 ### Defensive Programming
 
@@ -137,11 +179,12 @@ Use lintr for static analysis. Follow the default tidyverse style with:
 
 ## Hex Sticker
 
-Generate with `data-raw/make_hexsticker.R` using the hexSticker package. Black background, white NG icon, white "spacehakr" text, Helvetica font.
+Generate with `data-raw/make_hexsticker.R` using the hexSticker package. Black background,
+white NG icon, white package-name text, Helvetica font.
 
 ## GitHub CLI (gh) Idiosyncrasies
 
-- **Use backticks for function names in issue titles**: `` gh issue create --title "Add \`spk_join()\`" ``
+- **Use backticks for function names in issue titles**: `` gh issue create --title "Add \`bag_url()\`" ``
 - **No `gh milestone` command** - use `gh api` for milestones
 - **`--milestone` flag needs title, not number**
 
@@ -149,23 +192,35 @@ Generate with `data-raw/make_hexsticker.R` using the hexSticker package. Black b
 
 ### Pin this package in every consumer, or in none
 
-`Remotes:` entries for this package are currently **unpinned** in both `ngr` and `rfp`.
-That is deliberate. If a version pin is ever wanted again, add it to *every* consumer in
-the same change.
+**Two** consumers declare a `Remotes:` entry for this package, `ngr` and `rfp`, and both
+are being pinned to `@v0.4.2` for the duration of the rename — one-line PRs in each,
+which have to merge before this package's rename does. They come off when each switches.
+
+An earlier measurement here recorded that only one consumer declared the entry. It was
+wrong, and the wrongness was invisible until the pin went into that one and `pak`
+refused the whole solve.
 
 **Why:** `Remotes:` pins are declared per-repo but resolved globally. When one consumer
 pins `@v0.2.0` while another pins `@v0.1.0`, `pak` is asked for one package at two tags
 and refuses with `dependency conflict` — a message naming neither the package nor the
-tags. Nothing in the failing repo's own `DESCRIPTION` looks wrong. The original pin was
-added when this package had no releases, no CI, and a live `R CMD check` ERROR; it now
-runs a five-runner check matrix, so its own CI is the protection the pin used to provide.
+tags. Nothing in the failing repo's own `DESCRIPTION` looks wrong. With a single consumer
+holding an entry, "pin everywhere or nowhere" is satisfied by pinning that one, so the
+conflict cannot arise. The rename is what makes the pin necessary: a `Remotes:` entry
+follows GitHub's repository redirect and installs a package *named* `bag`, which leaves an
+`Imports: spacehakr` unsatisfiable.
 
 **How to apply:** pin everywhere or nowhere — mixing is the only option that fails
-outright. Unpinned, accept that a break on this package's default branch can turn a
-consumer's CI red on an unrelated PR. Tags still exist (`v0.1.0`, `v0.2.0`, `v0.3.0`) for
-anyone wanting a reproducible install.
+outright, and *everywhere* means every consumer that declares the entry, not every
+consumer you remember. Enumerate them before pinning any:
 
-(Source: machine-local memory `spacehakr-remotes-unpinned.md`, 2026-09-02)
+```bash
+for r in $(gh repo list NewGraphEnvironment --limit 200 --json name -q '.[].name'); do
+  gh api "repos/NewGraphEnvironment/$r/contents/DESCRIPTION" --jq .content 2>/dev/null \
+    | base64 -d | grep -q 'NewGraphEnvironment/bag' && echo "$r"
+done
+``` Unpinned, accept that a break on this package's default branch can turn a
+consumer's CI red on an unrelated PR. Tags exist from `v0.1.0` for anyone wanting a
+reproducible install, and `v0.4.2` is the last one before the rename and the deletions.
 
 <!-- BEGIN SOUL CONVENTIONS — DO NOT EDIT BELOW THIS LINE -->
 

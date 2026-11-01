@@ -1,0 +1,208 @@
+utm_frame <- function() {
+  # Three sites in three different NAD 83 UTM zones, as a plain data frame.
+  data.frame(
+    site = c("z9", "z10", "z11"),
+    utm_zone = c(9, 10, 11),
+    easting = c(464000, 532000, 601000),
+    northing = c(6043000, 6042000, 6041000),
+    stringsAsFactors = FALSE
+  )
+}
+
+testthat::test_that("bag_sf_from_utm rejects input that is not a data frame", {
+  testthat::expect_error(bag_sf_from_utm(NULL), "not NULL")
+  testthat::expect_error(bag_sf_from_utm(1:3), "data frame")
+})
+
+testthat::test_that("bag_sf_from_utm validates its arguments", {
+  d <- utm_frame()
+
+  testthat::expect_error(bag_sf_from_utm(d, col_utm_zone = 1L), class = "chk_error")
+  testthat::expect_error(bag_sf_from_utm(d, col_easting = 1L), class = "chk_error")
+  testthat::expect_error(bag_sf_from_utm(d, col_northing = 1L), class = "chk_error")
+  testthat::expect_error(bag_sf_from_utm(d, crs_return = "3005"), class = "chk_error")
+})
+
+testthat::test_that("bag_sf_from_utm reports a missing coordinate column by name", {
+  # This is tibble's own reporting, not a guard of ours -- one was written and removed
+  # because it duplicated this and no mutation could distinguish them. Pinned because it is
+  # the observable contract, whoever produces it.
+  d <- utm_frame()
+  d$easting <- NULL
+
+  testthat::expect_error(bag_sf_from_utm(d), "easting")
+})
+
+testthat::test_that("bag_sf_from_utm reports every missing column at once", {
+  d <- utm_frame()
+  d$easting <- NULL
+  d$northing <- NULL
+
+  err <- testthat::expect_error(bag_sf_from_utm(d))
+  testthat::expect_match(conditionMessage(err), "easting")
+  testthat::expect_match(conditionMessage(err), "northing")
+})
+
+testthat::test_that("bag_sf_from_utm returns an sf object in crs_return", {
+  testthat::skip_if_not_installed("sf")
+
+  out <- bag_sf_from_utm(utm_frame())
+
+  testthat::expect_s3_class(out, "sf")
+  testthat::expect_equal(sf::st_crs(out)$epsg, 3005)
+  testthat::expect_equal(nrow(out), 3L)
+})
+
+testthat::test_that("bag_sf_from_utm honours crs_return", {
+  testthat::skip_if_not_installed("sf")
+
+  out <- bag_sf_from_utm(utm_frame(), crs_return = 4326)
+
+  testthat::expect_equal(sf::st_crs(out)$epsg, 4326)
+})
+
+testthat::test_that("bag_sf_from_utm reads each row in its own zone", {
+  testthat::skip_if_not_installed("sf")
+
+  out <- bag_sf_from_utm(utm_frame(), crs_return = 4326)
+  lon <- sf::st_coordinates(out)[, 1]
+
+  # Each zone's easting means a different longitude. If one CRS were applied to all three
+  # rows, the longitudes would cluster instead of spreading across the three zone bands.
+  testthat::expect_true(all(lon > -140 & lon < -110))
+  testthat::expect_gt(diff(range(lon)), 5)
+})
+
+testthat::test_that("bag_sf_from_utm keeps the coordinate columns", {
+  testthat::skip_if_not_installed("sf")
+
+  out <- bag_sf_from_utm(utm_frame())
+
+  # remove = FALSE in the donor
+  testthat::expect_true(all(c("easting", "northing", "utm_zone") %in% names(out)))
+})
+
+testthat::test_that("bag_assign_utm and bag_sf_from_utm round trip", {
+  testthat::skip_if_not_installed("sf")
+
+  # The strongest property available: build points, read their UTM columns, rebuild from
+  # those columns, and land back on the same ground. Either function alone could be
+  # self-consistently wrong; together they cannot.
+  start <- sf::st_as_sf(
+    data.frame(
+      site = c("z9", "z10", "z11"),
+      lon = c(-128.5, -123.5, -118.5),
+      lat = c(54.5, 54.5, 54.5)
+    ),
+    coords = c("lon", "lat"), crs = 4326
+  )
+
+  with_utm <- suppressWarnings(bag_assign_utm(start, sig_dig = 3))
+  rebuilt <- bag_sf_from_utm(sf::st_drop_geometry(with_utm), crs_return = 4326)
+
+  a <- sf::st_coordinates(with_utm)[order(with_utm$site), ]
+  b <- sf::st_coordinates(rebuilt)[order(rebuilt$site), ]
+
+  # a metre or so, which is what rounding the easting to three decimals leaves
+  testthat::expect_equal(unname(a), unname(b), tolerance = 1e-4)
+})
+
+testthat::test_that("bag_sf_from_utm returns its columns in a fixed order", {
+  testthat::skip_if_not_installed("sf")
+
+  # Exact order, not set membership, because callers write this straight back to a
+  # GeoPackage. The coordinate columns survive (remove = FALSE) and the geometry column
+  # is appended last under the hardcoded name "geom", not the input's.
+  out <- bag_sf_from_utm(utm_frame())
+  testthat::expect_equal(
+    names(out),
+    c("site", "utm_zone", "easting", "northing", "geom")
+  )
+  testthat::expect_equal(attr(out, "sf_column"), "geom")
+})
+
+testthat::test_that("bag_sf_from_utm returns an sf object on a zero-row input", {
+  # group_split() on a 0-row frame yields no groups, so binding them gave a plain tibble
+  # rather than the sf object the function documents.
+  testthat::skip_if_not_installed("sf")
+
+  df0 <- data.frame(
+    site = character(),
+    utm_zone = integer(),
+    easting = numeric(),
+    northing = numeric()
+  )
+
+  out <- bag_sf_from_utm(df0)
+
+  testthat::expect_s3_class(out, "sf")
+  testthat::expect_equal(nrow(out), 0L)
+  testthat::expect_true(sf::st_crs(out) == sf::st_crs(3005))
+  testthat::expect_equal(attr(out, "sf_column"), "geom")
+})
+
+testthat::test_that("bag_sf_from_utm reads back what bag_assign_utm writes", {
+  testthat::skip_if_not_installed("sf")
+
+  # The two are documented as partners. bag_assign_utm() writes NA zone, easting and
+  # northing for a row it could not place, and handing that straight back here aborted
+  # from inside sf -- "missing values in coordinates not allowed" -- naming a
+  # group_split() index rather than a row or a column.
+  d <- sf::st_sf(
+    site = c("a", "b", "c"),
+    geometry = sf::st_sfc(
+      sf::st_point(c(-128.5, 54.5)), sf::st_point(), sf::st_point(c(-118.5, 54.5)),
+      crs = 4326
+    )
+  )
+  written <- sf::st_drop_geometry(suppressWarnings(bag_assign_utm(d)))
+
+  back <- suppressWarnings(bag_sf_from_utm(written))
+
+  testthat::expect_s3_class(back, "sf")
+  testthat::expect_equal(nrow(back), nrow(written))
+  testthat::expect_setequal(back$site, d$site)
+  testthat::expect_true(sf::st_is_empty(back)[back$site == "b"])
+  testthat::expect_false(any(sf::st_is_empty(back)[back$site != "b"]))
+})
+
+testthat::test_that("bag_sf_from_utm says so when it cannot place a row", {
+  testthat::skip_if_not_installed("sf")
+
+  d <- data.frame(
+    site = c("a", "b"),
+    utm_zone = c(9, NA),
+    easting = c(532381, NA),
+    northing = c(6039269, NA)
+  )
+
+  w <- testthat::expect_warning(bag_sf_from_utm(d), "no usable coordinates")
+  testthat::expect_match(conditionMessage(w), "1 row")
+})
+
+testthat::test_that("bag_sf_from_utm rejects a zone column that is not numeric", {
+  # readr returns character for a csv column that was entirely empty, and the abort then
+  # came from inside sf naming a group_split() index.
+  d <- data.frame(
+    utm_zone = c("9", "10"),
+    easting = c(5e5, 5e5),
+    northing = c(6e6, 6e6)
+  )
+
+  err <- testthat::expect_error(bag_sf_from_utm(d), "must be numeric")
+  testthat::expect_match(conditionMessage(err), "utm_zone")
+  testthat::expect_match(conditionMessage(err), "character")
+})
+
+testthat::test_that("bag_sf_from_utm rejects a zone outside 1 to 60", {
+  d <- data.frame(
+    utm_zone = c(9, 99),
+    easting = c(5e5, 5e5),
+    northing = c(6e6, 6e6)
+  )
+
+  err <- testthat::expect_error(bag_sf_from_utm(d), "1 to 60")
+  # the row and the value, so a caller can find it
+  testthat::expect_match(conditionMessage(err), "Row 2")
+  testthat::expect_match(conditionMessage(err), "99")
+})
