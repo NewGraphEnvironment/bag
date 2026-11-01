@@ -322,9 +322,109 @@ Reprefix only, per the gate: the donor stems are kept and only the prefix change
 - [ ] Land the deprecating forwarders in both donor repos. The internal package's half is
       tracked by its own counterpart issue; `fpr` needs a new issue for its four
 
+## Phase 9 — Final naming pass (supersedes the names used in Phases 2, 5 and 6)
+
+Decided with the owner, 2026-10-31, after the intake landed and the names could be read
+side by side. Three forks were put to them and all three took the recommendation.
+
+**The principle:** drop prefixes that are *organisational* — `sp_`, `u_`, `fs_`, `meta_`,
+which were a donor package's filing system and encode nothing a caller needs. Keep words
+that are *contractual* — `assign`, `import`, `to_geojson`, `refresh` — which say what goes
+in, what comes out, or whether the caller's file survives.
+
+Twice during review a name was shortened and lost contract information: `bag_utm` next to
+`bag_utm_to_sf` read as either direction, and `bag_geojson` dropped a conversion that is
+real. Both were reverted. "Tight" has a floor, and the floor is the contract.
+
+- [ ] Rename the ten exports:
+
+  | now | final | why |
+  |---|---|---|
+  | `bag_bcdata` | `bag_bcdc` | one stem for the catalogue family; `bcdc_` is the prefix the upstream bcdata package uses itself |
+  | `bag_bcd_get_data` | `bag_bcdc_read` | today's name is a near-collision with `bag_bcdata` and does the opposite: reads to memory, not to disk |
+  | `bag_meta_bcd_xref` | `bag_bcdc_index` | `meta_` is organisational |
+  | `bag_meta_bcd_xref_col_comments` | `bag_bcdc_cols` | 30 characters, four stacked qualifiers |
+  | `bag_layer_info` | `bag_layers` | pure reader, returns a data frame |
+  | `bag_fs_backup` | `bag_backup` | `fs_` is organisational; this one genuinely is a backup |
+  | `bag_sp_gpkg_backup` | `bag_gpkg_refresh` | refreshes coordinates and **can overwrite its source**; "backup" promised a safety it does not have |
+  | `bag_sp_assign_utm` | `bag_assign_utm` | verb leads, grouping the two that annotate an existing object |
+  | `bag_sp_assign_latlong` | `bag_assign_latlong` | as above |
+  | `bag_sp_assign_sf_from_utm` | `bag_sf_from_utm` | the constructor; not an inverse of `bag_assign_utm`, so not named as a pair |
+
+- [ ] Unchanged, deliberately: `bag_url`, `bag_wfs`, `bag_gpx_import` (the verb is
+      load-bearing — it writes files and returns `NULL`), `bag_gpkg_to_geojson` (a real
+      conversion, and already the clearest name of the set)
+- [ ] Rename the two internals to the dotted convention this package already uses
+      (`.bag_ogr2ogr`, `.bag_reencode`, `.bag_source_resolve`, `.bag_url_args`):
+      `bag_chk_sf_point` to `.bag_chk_sf_point`, and `bag_meta_bcd_xref_pkg_schtab` to
+      `.bag_bcdc_schtab`
+- [ ] Four families, each coherent: **download** (3), **catalogue** (4), **files** (4),
+      **coordinates** (3). The `gpkg_` stem groups the three GeoPackage functions without
+      needing a family of its own
+- [ ] `_pkgdown.yml` reference groups, `.lintr` per-file exclusion paths, `@seealso` and
+      `@family` cross-references, and the `system.file(package = )` calls all follow
+
+### Measured asymmetry behind the coordinate names
+
+`bag_assign_utm` and `bag_sf_from_utm` are **not** inverses, so naming them as a
+direction pair (`sf_to_utm` / `utm_to_sf`) would promise a round trip that does not close:
+
+| | `bag_assign_utm` | `bag_sf_from_utm` |
+|---|---|---|
+| accepts | `sf` POINT, required | plain data frame, no geometry |
+| returns CRS | the **input** CRS | `crs_return`, default 3005 |
+| geometry column | `geometry`, preserved | `geom`, hardcoded |
+
+Measured: 4326 in, 4326 out of the first, 3005 out of the second, with the geometry column
+renamed on the way. Left as donor behaviour and documented; `crs_return` and the hardcoded
+`geom` land in the files ~20 call sites write, so changing either is a file-format change.
+
+## Phase 10 — Drop the superseded layer remover
+
+Decided with the owner, 2026-10-31. Measured first: badged
+`lifecycle::badge("superseded")` by its donor in favour of
+`gdalraster::ogr_layer_delete()`, and it has **zero live callers** — an org-wide code
+search returned 11 hits, of which the only one in consumer code is a commented-out line.
+`gdalraster` is already live in three of our GIS scripts and installed at 2.6.1.
+
+This is the issue's own item 5 criterion, "helpers nothing calls", and it holds more
+cleanly here than for the ten deleted in Phase 3: those at least had live callers under
+their pre-extraction names.
+
+- [ ] Delete `R/bag_u_rm_gpkg_layers.R`, its test file (11 blocks) and its `man/` page
+- [ ] Drop `lifecycle` from `Suggests` — this was its only user
+- [ ] Remove its `_pkgdown.yml` reference entry; exports 15 to 14
+- [ ] **Precondition:** file the data-loss defect with the donor first. The donor still
+      ships the broken version, and deleting our copy would leave the fix nowhere
+
+## Phase 11 — Remove magrittr (deferred to its own issue)
+
+Decided with the owner, 2026-10-31: filed as a separate issue, not done on this branch.
+
+Measured: no newer package of ours declares `magrittr` or uses `%>%` in `R/` at all —
+0 of 68 R files in one, 0 of 46 in another, 0 of 49, 0 of 18, 0 of 17, 0 of 11. Five older
+packages declare it. Adding it here would make this the only new-generation package
+carrying it, imported along with the donated functions.
+
+The port is smaller than first judged: only **two** of the four donated files use
+magrittr's `.` placeholder, and both uses are `sf::st_coordinates(.)` called **twice** on
+the same geometry. Computing it once into a variable and injecting with `!!` is shorter,
+does half the work, and is immune to the data-masking trap a bare variable inside
+`mutate()` has. The other two files need only `|>`.
+
+- [ ] Close the column-order test gap **on this branch**, before any rewrite: every column
+      assertion is `%in% names()`, so order is unpinned on exactly the three functions a
+      rewrite would touch, and callers write those columns to disk
+
 ## Owed at the end (reported, done after merge)
 
 - [ ] File `fpr`'s forwarder issue, and report on the counterpart issue that bag exists
+- [ ] **Report every donor defect found while porting.** Nine were found and one was
+      filed; the rest were recorded in `progress.md` and reported nowhere, and this
+      list did not ask for them. Both donors still ship them. Grouped by function:
+      the catalogue xref family (3), the GPX reader (3) and the layer remover's
+      data-loss path for the internal package; the coordinate helpers' never-firing
+      geometry guard and the backup's `dir_backup` branch for `fpr`
 - [ ] Report to the umbrella issue that its ODM conditional is settled — drone jobs do
       still run — and that three public repos depend on `ngr`'s copies of the helpers this
       branch deletes, which its ngr-retirement row has to cover
