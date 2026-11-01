@@ -341,3 +341,43 @@
 - Next: Phase 1 — the repository rename — is still with the owner, and 4b, 7's release
   and 8 remain blocked on it. `NEWS.md` and the `CLAUDE.md` above-marker rewrite are
   drafted and ready to apply the moment it lands
+
+## Session 2026-11-01 (UTC) — the rename, the identity pass, and a fourth review round
+
+- **Phase 1 done.** `gh repo rename bag`, confirmed by the owner. The old repository path
+  redirects — measured, `gh api repos/NewGraphEnvironment/spacehakr` answers
+  `NewGraphEnvironment/bag` — so `spacehakr@v0.4.2` stays installable. The old Pages path
+  does not redirect: `www.newgraphenvironment.com/spacehakr/` is 404 and
+  `www.newgraphenvironment.com/bag/` is 200, serving the pre-rename site until the merge
+  deploys
+- **Phase 4b and the release.** URLs in `DESCRIPTION`, `_pkgdown.yml` and `CITATION.cff`;
+  `NEWS.md`; a rewritten `README.Rmd`; `CLAUDE.md` above the marker; `bag 0.5.0`. The tag
+  and the GitHub release are deliberately left for the merge
+- **CI green on all five runners plus pkgdown**, nothing cancelled — the first build of
+  this branch anywhere but this Mac, and the new tests write GeoPackages and poke SQLite
+- **A fourth review round, over the identity pass only**, because that prose post-dated
+  the three branch rounds and `CLAUDE.md` is loaded as instructions every session here.
+  **Fourteen findings, five of them false statements a reader would act on.** Worth every
+  token: the branch rounds could not have caught these, since none of this text existed
+- The five: `Suggests` said 3 and is 5; "eleven functions added" followed by a list of
+  ten; "those packages keep deprecating forwarders" when they have none yet; "the
+  consumer **is** pinned" when the PR is open; and `CITATION.cff` regenerated with a bare
+  `cffr::cff_write()` rather than `/citation-cff`'s recipe — 388 lines against 49, with
+  this machine's library in a `references:` block and the DOI gone from `message`
+- **The counting errors share one cause**: each number was true when I drafted the text
+  and false by the time it landed, because the tree moved under it. Re-measured every one
+  against `DESCRIPTION` and `NAMESPACE` before committing, rather than against the draft
+- **A guard of mine failed toward pass while checking this.** To prove four examples now
+  run I used `example()`, which **skips** `\dontrun{}` blocks and returns success — so it
+  reported OK on examples that had not been un-wrapped, because my edit regex had matched
+  nothing. Caught by the un-wrap printing no changes. The real check extracts each Rd with
+  `tools::Rd2ex()` and sources it
+- One finding checked and **not** taken: "four functions arrived with magrittr pipelines"
+  was called a conflict with eleven donors. Measured across the three intake commits —
+  exactly four files landed here carrying `%>%`, all from the fpr intake. Reworded to
+  "four of the eleven" so it cannot be misread
+- Commits: `a8f74eb` (identity + release), `d7b6e80` (round 4 corrections)
+- Open at the merge: [rfp PR #419](https://github.com/NewGraphEnvironment/rfp/pull/419)
+  pins the one consumer and **must merge first**; `sred#26`'s title still says
+  `spacehakr`, so `rnd_issue.sh` returns `NONE` here; the tag, the release and the
+  post-merge CI watch are `/gh-pr-merge`'s
