@@ -30,13 +30,13 @@
 #' \dontrun{
 #' dir_out <- "data/gis/skt/esi_sows"
 #' layer_name_raw <- "geonode:UBulkley_wshed"
-#' spk_geoserv_dl(
+#' bag_wfs(
 #'   dir_out = dir_out,
 #'   layer_name_raw = layer_name_raw
 #' )
 #' }
 #'
-#' @family geoserver
+#' @family download
 #' @export
 #' @importFrom chk chk_string chk_dir chk_not_null chk_flag
 #' @importFrom fs dir_create path path_abs file_delete
@@ -44,7 +44,7 @@
 #' @importFrom sf st_crs st_transform st_bbox st_as_sfc
 #' @importFrom cli cli_alert_warning cli_alert_success cli_abort
 #' @importFrom httr2 request req_url_query req_error req_perform resp_status
-spk_geoserv_dlv <- function(
+bag_wfs <- function(
   url_geoserver = "https://maps.skeenasalmon.info/geoserver/ows",
   dir_out = NULL,
   layer_name_raw = NULL,

@@ -1,6 +1,6 @@
-test_that("spk_geoserv_dlv errors on non-existent directory", {
+test_that("bag_wfs errors on non-existent directory", {
   expect_error(
-    spk_geoserv_dlv(
+    bag_wfs(
       dir_out = "/nonexistent/path",
       layer_name_raw = "test:layer"
     ),
@@ -8,29 +8,29 @@ test_that("spk_geoserv_dlv errors on non-existent directory", {
   )
 })
 
-test_that("spk_geoserv_dlv validates required parameters", {
+test_that("bag_wfs validates required parameters", {
   tmpdir <- tempdir()
   
   # Missing layer_name_raw should error
   expect_error(
-    spk_geoserv_dlv(dir_out = tmpdir, layer_name_raw = NULL),
+    bag_wfs(dir_out = tmpdir, layer_name_raw = NULL),
     class = "chk_error"
   )
 })
 
-test_that("spk_geoserv_dlv extracts layer name from raw name", {
+test_that("bag_wfs extracts layer name from raw name", {
   skip("Requires live WFS endpoint - skipping integration test")
   
   # This would test actual download functionality
   # Skipped because it requires network and live server
 })
 
-test_that("spk_geoserv_dlv parameter validation works", {
+test_that("bag_wfs parameter validation works", {
   tmpdir <- tempdir()
   
   # Invalid discard_no_features (not logical)
   expect_error(
-    spk_geoserv_dlv(
+    bag_wfs(
       dir_out = tmpdir,
       layer_name_raw = "test:layer",
       discard_no_features = "yes"
@@ -47,14 +47,14 @@ test_that("spk_geoserv_dlv parameter validation works", {
   })
 })
 
-test_that("spk_geoserv_dlv creates output directory if needed", {
+test_that("bag_wfs creates output directory if needed", {
   skip("Requires live WFS endpoint - skipping integration test")
   
   # Would test fs::dir_create functionality
   # Skipped to avoid network calls
 })
 
-test_that("spk_geoserv_dlv bbox handling", {
+test_that("bag_wfs bbox handling", {
   skip_if_not_installed("sf")
   
   tmpdir <- tempdir()

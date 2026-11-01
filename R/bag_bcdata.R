@@ -20,7 +20,7 @@
 #'
 #' @return The value of [sf::st_write()], invisibly. Called for its side effects.
 #'
-#' @seealso [spk_source_url()] for pulling layers from arbitrary URLs.
+#' @seealso [bag_url()] for pulling layers from arbitrary URLs.
 #'
 #' @examples
 #' \dontrun{
@@ -30,7 +30,7 @@
 #' purrr::walk2(
 #'   .x = get_this,
 #'   .y = name_this,
-#'   .f = ~ spk_source_bcdata(
+#'   .f = ~ bag_bcdata(
 #'     bcdata_record_id = .x,
 #'     path_gpkg = path_gpkg,
 #'     layer_name = .y
@@ -44,7 +44,7 @@
 #' @importFrom sf st_geometry st_transform st_intersection st_write
 #' @importFrom stringr str_to_lower str_to_upper
 #' @importFrom chk chk_string chk_file
-spk_source_bcdata <- function(
+bag_bcdata <- function(
     bcdata_record_id = NULL,
     path_gpkg = NULL,
     mask = NULL,

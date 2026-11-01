@@ -16,12 +16,12 @@
 #'
 #' @seealso [sf::st_layers()], [sf::st_read()], [sf::st_geometry_type()]
 #'
-#' @family vector
+#' @family files
 #'
 #' @examples
 #' \dontrun{
 #' # Get layer information from a GeoPackage
-#' layer_info <- spk_layer_info("path/to/data.gpkg")
+#' layer_info <- bag_layer_info("path/to/data.gpkg")
 #' }
 #'
 #' @importFrom sf st_layers st_read st_geometry_type
@@ -30,7 +30,7 @@
 #' @importFrom glue glue
 #'
 #' @export
-spk_layer_info <- function(path) {
+bag_layer_info <- function(path) {
   sf::st_layers(path) |>
     as.data.frame() |>
     dplyr::mutate(

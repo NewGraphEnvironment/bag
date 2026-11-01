@@ -17,21 +17,21 @@ fake_layer <- function() {
   )
 }
 
-testthat::test_that("spk_source_bcdata validates its arguments", {
+testthat::test_that("bag_bcdata validates its arguments", {
   gpkg <- tempfile(fileext = ".gpkg")
   file.create(gpkg)
   on.exit(unlink(gpkg), add = TRUE)
 
   testthat::expect_error(
-    spk_source_bcdata(bcdata_record_id = 1L, path_gpkg = gpkg),
+    bag_bcdata(bcdata_record_id = 1L, path_gpkg = gpkg),
     class = "chk_error"
   )
   testthat::expect_error(
-    spk_source_bcdata(bcdata_record_id = NULL, path_gpkg = gpkg),
+    bag_bcdata(bcdata_record_id = NULL, path_gpkg = gpkg),
     class = "chk_error"
   )
   testthat::expect_error(
-    spk_source_bcdata(
+    bag_bcdata(
       bcdata_record_id = "whse_basemapping.bcgs_5k_grid",
       path_gpkg = gpkg,
       layer_name = 1L
@@ -40,9 +40,9 @@ testthat::test_that("spk_source_bcdata validates its arguments", {
   )
 })
 
-testthat::test_that("spk_source_bcdata rejects a path_gpkg that does not exist", {
+testthat::test_that("bag_bcdata rejects a path_gpkg that does not exist", {
   testthat::expect_error(
-    spk_source_bcdata(
+    bag_bcdata(
       bcdata_record_id = "whse_basemapping.bcgs_5k_grid",
       path_gpkg = file.path(tempdir(), "definitely-not-here.gpkg")
     ),
@@ -50,13 +50,13 @@ testthat::test_that("spk_source_bcdata rejects a path_gpkg that does not exist",
   )
 })
 
-testthat::test_that("spk_source_bcdata upper-cases the record id before querying", {
+testthat::test_that("bag_bcdata upper-cases the record id before querying", {
   testthat::skip_if_not_installed("sf")
 
   testthat::skip_if_not_installed("mockery")
 
   seen <- NULL
-  f <- spk_source_bcdata
+  f <- bag_bcdata
   mockery::stub(f, "bcdata::bcdc_query_geodata", function(record, ...) {
     seen <<- record
     record
@@ -79,12 +79,12 @@ testthat::test_that("spk_source_bcdata upper-cases the record id before querying
   testthat::expect_equal(seen, "WHSE_BASEMAPPING.BCGS_5K_GRID")
 })
 
-testthat::test_that("spk_source_bcdata writes a lower-cased layer name", {
+testthat::test_that("bag_bcdata writes a lower-cased layer name", {
   testthat::skip_if_not_installed("sf")
 
   testthat::skip_if_not_installed("mockery")
 
-  f <- spk_source_bcdata
+  f <- bag_bcdata
   mockery::stub(f, "bcdata::bcdc_query_geodata", function(record, ...) record)
   mockery::stub(f, "bcdata::collect", function(x, ...) {
     force(x) # the native pipe nests the query inside collect(); without this it is never evaluated
@@ -104,12 +104,12 @@ testthat::test_that("spk_source_bcdata writes a lower-cased layer name", {
   testthat::expect_true("grid_5k" %in% sf::st_layers(gpkg)$name)
 })
 
-testthat::test_that("spk_source_bcdata falls back to the record id as layer name", {
+testthat::test_that("bag_bcdata falls back to the record id as layer name", {
   testthat::skip_if_not_installed("sf")
 
   testthat::skip_if_not_installed("mockery")
 
-  f <- spk_source_bcdata
+  f <- bag_bcdata
   mockery::stub(f, "bcdata::bcdc_query_geodata", function(record, ...) record)
   mockery::stub(f, "bcdata::collect", function(x, ...) {
     force(x) # the native pipe nests the query inside collect(); without this it is never evaluated

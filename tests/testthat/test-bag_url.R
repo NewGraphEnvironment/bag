@@ -1,5 +1,5 @@
 # The ogr2ogr invocation is verified by building the argument vector and comparing it.
-# `.spk_source_url_args()` exists for that: the check matrix has five runners and none is
+# `.bag_url_args()` exists for that: the check matrix has five runners and none is
 # guaranteed to carry the GDAL CLI, so a test that shells out is a test that skips.
 #
 # The failure path is exercised by stubbing system2() rather than fetching a URL that
@@ -27,7 +27,7 @@ write_utf16le <- function(lines, path) {
   path
 }
 
-# spk_source_url() checks Sys.which("ogr2ogr") before its loop. The mock-based tests
+# bag_url() checks Sys.which("ogr2ogr") before its loop. The mock-based tests
 # below never reach the CLI, but they do reach that guard -- and four of five check
 # runners have no ogr2ogr binary (sf pulls libgdal-dev, which does not ship it). Stubbing
 # the guard is what keeps them running there; skipping instead would leave the fix with
@@ -51,31 +51,31 @@ seed_gpkg <- function() {
 
 # ---- validation -------------------------------------------------------------
 
-testthat::test_that("spk_source_url validates its arguments", {
+testthat::test_that("bag_url validates its arguments", {
   dir <- tempdir()
   gpkg <- file.path(dir, "layers.gpkg")
 
   testthat::expect_error(
-    spk_source_url(path_gpkg = 1L, urls = "https://example.com/a.csv"),
+    bag_url(path_gpkg = 1L, urls = "https://example.com/a.csv"),
     class = "chk_error"
   )
   testthat::expect_error(
-    spk_source_url(path_gpkg = gpkg, urls = 1L),
+    bag_url(path_gpkg = gpkg, urls = 1L),
     class = "chk_error"
   )
   testthat::expect_error(
-    spk_source_url(path_gpkg = gpkg, urls = "https://example.com/a.csv", query = 1L),
+    bag_url(path_gpkg = gpkg, urls = "https://example.com/a.csv", query = 1L),
     class = "chk_error"
   )
   testthat::expect_error(
-    spk_source_url(path_gpkg = gpkg, urls = "https://example.com/a.csv", a_srs = 1L),
+    bag_url(path_gpkg = gpkg, urls = "https://example.com/a.csv", a_srs = 1L),
     class = "chk_error"
   )
 })
 
-testthat::test_that("spk_source_url requires the parent directory to exist", {
+testthat::test_that("bag_url requires the parent directory to exist", {
   testthat::expect_error(
-    spk_source_url(
+    bag_url(
       path_gpkg = file.path(tempdir(), "no-such-dir", "layers.gpkg"),
       urls = "https://example.com/a.csv"
     ),
@@ -83,10 +83,10 @@ testthat::test_that("spk_source_url requires the parent directory to exist", {
   )
 })
 
-testthat::test_that("spk_source_url rejects a layer vector that does not match urls", {
+testthat::test_that("bag_url rejects a layer vector that does not match urls", {
   gpkg <- file.path(tempdir(), "layers.gpkg")
   testthat::expect_error(
-    spk_source_url(
+    bag_url(
       path_gpkg = gpkg,
       urls = c("https://example.com/a.csv", "https://example.com/b.csv"),
       layer = "only_one"
@@ -97,8 +97,8 @@ testthat::test_that("spk_source_url rejects a layer vector that does not match u
 
 # ---- argument construction --------------------------------------------------
 
-testthat::test_that(".spk_source_url_args builds the base ogr2ogr arguments", {
-  args <- .spk_source_url_args(
+testthat::test_that(".bag_url_args builds the base ogr2ogr arguments", {
+  args <- .bag_url_args(
     path_gpkg = "layers.gpkg",
     source = "/vsicurl/https://example.com/data/thresholds.csv",
     layer = "thresholds"
@@ -116,16 +116,16 @@ testthat::test_that(".spk_source_url_args builds the base ogr2ogr arguments", {
   )
 })
 
-testthat::test_that(".spk_source_url_args omits -update when the GeoPackage is absent", {
-  args <- .spk_source_url_args("layers.gpkg", "/vsicurl/x", "l", update = FALSE)
+testthat::test_that(".bag_url_args omits -update when the GeoPackage is absent", {
+  args <- .bag_url_args("layers.gpkg", "/vsicurl/x", "l", update = FALSE)
   testthat::expect_false("-update" %in% args)
   testthat::expect_false("-overwrite" %in% args)
   # -f GPKG alone creates the file; -update against a missing one is an ogr2ogr error
   testthat::expect_equal(args[1:3], c("-f", "GPKG", "layers.gpkg"))
 })
 
-testthat::test_that(".spk_source_url_args expands open_options into repeated -oo", {
-  args <- .spk_source_url_args(
+testthat::test_that(".bag_url_args expands open_options into repeated -oo", {
+  args <- .bag_url_args(
     "layers.gpkg", "/vsicurl/x", "sites",
     open_options = c(
       "X_POSSIBLE_NAMES=Longitude",
@@ -145,31 +145,31 @@ testthat::test_that(".spk_source_url_args expands open_options into repeated -oo
   testthat::expect_equal(args[length(args)], "/vsicurl/x")
 })
 
-testthat::test_that(".spk_source_url_args keeps a_srs and t_srs distinct", {
-  args <- .spk_source_url_args("g.gpkg", "src", "l", a_srs = "EPSG:4326", t_srs = "EPSG:3005")
+testthat::test_that(".bag_url_args keeps a_srs and t_srs distinct", {
+  args <- .bag_url_args("g.gpkg", "src", "l", a_srs = "EPSG:4326", t_srs = "EPSG:3005")
   testthat::expect_equal(args[which(args == "-a_srs") + 1L], "EPSG:4326")
   testthat::expect_equal(args[which(args == "-t_srs") + 1L], "EPSG:3005")
 
-  neither <- .spk_source_url_args("g.gpkg", "src", "l")
+  neither <- .bag_url_args("g.gpkg", "src", "l")
   testthat::expect_false(any(c("-a_srs", "-t_srs", "-oo", "-where") %in% neither))
 })
 
-testthat::test_that(".spk_source_url_args passes query to -where unquoted", {
+testthat::test_that(".bag_url_args passes query to -where unquoted", {
   q <- "watershed_group_code in ('ADMS')"
-  args <- .spk_source_url_args("g.gpkg", "src", "l", query = q)
+  args <- .bag_url_args("g.gpkg", "src", "l", query = q)
   # Unquoted in the builder by design. system2() DOES run its args through `sh` -- the
   # comment here previously claimed the opposite, which is the reasoning that removed
-  # shQuote() in 0.3.0 and broke -where. Quoting happens in .spk_ogr2ogr() instead, so
+  # shQuote() in 0.3.0 and broke -where. Quoting happens in .bag_ogr2ogr() instead, so
   # this vector stays comparable by equality.
   testthat::expect_equal(args[which(args == "-where") + 1L], q)
 })
 
 # ---- failure is loud --------------------------------------------------------
 
-testthat::test_that(".spk_ogr2ogr aborts naming the URL and the stderr tail", {
+testthat::test_that(".bag_ogr2ogr aborts naming the URL and the stderr tail", {
   testthat::skip_if_not_installed("mockery")
 
-  f <- .spk_ogr2ogr
+  f <- .bag_ogr2ogr
   mockery::stub(f, "system2", function(command, args, stdout, stderr, ...) {
     writeLines(c("ERROR 4: /vsicurl/... not recognized", "ERROR 1: unable to open"), stderr)
     1L
@@ -185,7 +185,7 @@ testthat::test_that(".spk_ogr2ogr aborts naming the URL and the stderr tail", {
   )
 })
 
-testthat::test_that(".spk_ogr2ogr shell-quotes every argument", {
+testthat::test_that(".bag_ogr2ogr shell-quotes every argument", {
   # system2() pastes args into a command string run through sh, quoting only the command.
   # Measured: system2("echo", args = "a&b") prints "a" and reports `sh: b: command not
   # found`. A query-string URL was therefore split at each `&`, and the trailing
@@ -195,7 +195,7 @@ testthat::test_that(".spk_ogr2ogr shell-quotes every argument", {
   testthat::skip_if_not_installed("mockery")
 
   seen <- NULL
-  f <- .spk_ogr2ogr
+  f <- .bag_ogr2ogr
   mockery::stub(f, "system2", function(command, args, ...) {
     seen <<- args
     0L
@@ -224,8 +224,8 @@ testthat::test_that(".spk_ogr2ogr shell-quotes every argument", {
 
 testthat::test_that("premise: shQuote survives shell metacharacters", {
   # A PREMISE about base R, not coverage of the fix -- it calls no package function and
-  # stays green if shQuote() is removed from .spk_ogr2ogr(). The guard on the fix is
-  # ".spk_ogr2ogr shell-quotes every argument" above. Kept because it is the assumption
+  # stays green if shQuote() is removed from .bag_ogr2ogr(). The guard on the fix is
+  # ".bag_ogr2ogr shell-quotes every argument" above. Kept because it is the assumption
   # the fix rests on: a URL may carry $ and backticks, a -where clause carries single
   # quotes, and a string holding both is what would break a naive double-quoting.
   skip_no_sh()
@@ -252,13 +252,13 @@ testthat::test_that("an ampersand in a source URL does not silently succeed", {
   gpkg <- tempfile(fileext = ".gpkg")
   on.exit(unlink(gpkg), add = TRUE)
 
-  args <- .spk_source_url_args(
+  args <- .bag_url_args(
     path_gpkg = gpkg, source = src, layer = "t",
     query = "code in ('ADMS')",
     open_options = c("X_POSSIBLE_NAMES=Longitude", "Y_POSSIBLE_NAMES=Latitude"),
     a_srs = "EPSG:4326", update = FALSE
   )
-  .spk_ogr2ogr(args, src)
+  .bag_ogr2ogr(args, src)
 
   testthat::expect_true(file.exists(gpkg))
   got <- sf::st_read(gpkg, layer = "t", quiet = TRUE)
@@ -267,10 +267,10 @@ testthat::test_that("an ampersand in a source URL does not silently succeed", {
   testthat::expect_equal(got$code, "ADMS")
 })
 
-testthat::test_that(".spk_ogr2ogr is silent on success", {
+testthat::test_that(".bag_ogr2ogr is silent on success", {
   testthat::skip_if_not_installed("mockery")
 
-  f <- .spk_ogr2ogr
+  f <- .bag_ogr2ogr
   mockery::stub(f, "system2", function(...) 0L)
   testthat::expect_silent(out <- f(c("-f", "GPKG"), "https://example.com/ok.csv"))
   testthat::expect_null(out)
@@ -278,7 +278,7 @@ testthat::test_that(".spk_ogr2ogr is silent on success", {
 
 # ---- encoding ---------------------------------------------------------------
 
-testthat::test_that(".spk_reencode converts a UTF-16LE source to UTF-8", {
+testthat::test_that(".bag_reencode converts a UTF-16LE source to UTF-8", {
   src <- tempfile(fileext = ".csv")
   on.exit(unlink(src), add = TRUE)
 
@@ -289,7 +289,7 @@ testthat::test_that(".spk_reencode converts a UTF-16LE source to UTF-8", {
   raw_head <- readLines(src, n = 1L, warn = FALSE)
   testthat::expect_false(identical(raw_head, "Site/Site,Year/Annee,Longitude,Latitude"))
 
-  out <- .spk_reencode(src, "UTF-16LE", "csv")
+  out <- .bag_reencode(src, "UTF-16LE", "csv")
   on.exit(unlink(out), add = TRUE)
 
   lines <- readLines(out, warn = FALSE)
@@ -297,9 +297,9 @@ testthat::test_that(".spk_reencode converts a UTF-16LE source to UTF-8", {
   testthat::expect_equal(lines[[2]], "S1,2024,-127.1,54.2")
 })
 
-testthat::test_that(".spk_source_resolve streams through /vsicurl when encoding is NULL", {
+testthat::test_that(".bag_source_resolve streams through /vsicurl when encoding is NULL", {
   testthat::expect_equal(
-    .spk_source_resolve("https://example.com/a.csv"),
+    .bag_source_resolve("https://example.com/a.csv"),
     "/vsicurl/https://example.com/a.csv"
   )
 })
@@ -312,29 +312,29 @@ testthat::test_that(".spk_source_resolve streams through /vsicurl when encoding 
 # The live check is in planning findings; it cannot live here because no test in this
 # package touches the network.
 
-testthat::test_that(".spk_source_resolve honours vsi", {
+testthat::test_that(".bag_source_resolve honours vsi", {
   testthat::expect_equal(
-    .spk_source_resolve("https://example.com/a.csv", vsi = "curl"),
+    .bag_source_resolve("https://example.com/a.csv", vsi = "curl"),
     "/vsicurl/https://example.com/a.csv"
   )
   testthat::expect_equal(
-    .spk_source_resolve("https://example.com/a.csv", vsi = "curl_streaming"),
+    .bag_source_resolve("https://example.com/a.csv", vsi = "curl_streaming"),
     "/vsicurl_streaming/https://example.com/a.csv"
   )
 })
 
-testthat::test_that(".spk_source_resolve keeps a query string intact", {
+testthat::test_that(".bag_source_resolve keeps a query string intact", {
   url <- "https://example.com/ows?service=WFS&typeName=pub%3AX&outputFormat=application%2Fjson"
   testthat::expect_equal(
-    .spk_source_resolve(url, vsi = "curl_streaming"),
+    .bag_source_resolve(url, vsi = "curl_streaming"),
     paste0("/vsicurl_streaming/", url)
   )
 })
 
-testthat::test_that("spk_source_url rejects an unknown vsi, naming the valid values", {
+testthat::test_that("bag_url rejects an unknown vsi, naming the valid values", {
   gpkg <- file.path(tempdir(), "layers.gpkg")
   msg <- tryCatch(
-    spk_source_url(
+    bag_url(
       path_gpkg = gpkg,
       urls = "https://example.com/a.csv",
       vsi = "vsis3"
@@ -353,17 +353,17 @@ testthat::test_that("vsi refuses a partial match rather than resolving it", {
   # URL, which no test in this package may do. Exact matching is deliberate.
   gpkg <- file.path(tempdir(), "layers.gpkg")
   msg <- tryCatch(
-    spk_source_url(path_gpkg = gpkg, urls = "https://example.com/a.csv", vsi = "curl_stream"),
+    bag_url(path_gpkg = gpkg, urls = "https://example.com/a.csv", vsi = "curl_stream"),
     error = conditionMessage
   )
   testthat::expect_match(msg, "curl_stream")
   testthat::expect_match(msg, "vsi")
 })
 
-testthat::test_that("spk_source_url refuses encoding combined with a non-default vsi", {
+testthat::test_that("bag_url refuses encoding combined with a non-default vsi", {
   gpkg <- file.path(tempdir(), "layers.gpkg")
   msg <- tryCatch(
-    spk_source_url(
+    bag_url(
       path_gpkg = gpkg,
       urls = "https://example.com/a.csv",
       layer = "a",
@@ -379,7 +379,7 @@ testthat::test_that("spk_source_url refuses encoding combined with a non-default
   testthat::expect_match(msg, "downloaded|download")
 })
 
-testthat::test_that("spk_source_url allows encoding with the default vsi", {
+testthat::test_that("bag_url allows encoding with the default vsi", {
   # the mutual exclusion must not fire for callers who never mention vsi -- this is the
   # whole existing encoding path and it has to keep working. Both the fetch and the CLI
   # are stubbed: no test here touches the network.
@@ -391,9 +391,9 @@ testthat::test_that("spk_source_url allows encoding with the default vsi", {
   on.exit(unlink(local), add = TRUE)
 
   seen <- NULL
-  f <- stub_ogr_on_path(spk_source_url)
-  mockery::stub(f, ".spk_source_resolve", function(...) local)
-  mockery::stub(f, ".spk_ogr2ogr", function(args, url) {
+  f <- stub_ogr_on_path(bag_url)
+  mockery::stub(f, ".bag_source_resolve", function(...) local)
+  mockery::stub(f, ".bag_ogr2ogr", function(args, url) {
     seen <<- args
     invisible(NULL)
   })
@@ -418,14 +418,14 @@ testthat::test_that("every temp file is cleaned up, not just the last", {
   gpkg <- file.path(tempdir(), "layers.gpkg")
   made <- character(0)
 
-  f <- stub_ogr_on_path(spk_source_url)
-  mockery::stub(f, ".spk_source_resolve", function(...) {
+  f <- stub_ogr_on_path(bag_url)
+  mockery::stub(f, ".bag_source_resolve", function(...) {
     p <- tempfile(fileext = ".csv")
     writeLines("Site,Longitude,Latitude", p)
     made <<- c(made, p)
     p
   })
-  mockery::stub(f, ".spk_ogr2ogr", function(...) invisible(NULL))
+  mockery::stub(f, ".bag_ogr2ogr", function(...) invisible(NULL))
 
   f(
     path_gpkg = gpkg,
@@ -453,9 +453,9 @@ testthat::test_that("an encoded source still registers its temp file for cleanup
   on.exit(unlink(local), add = TRUE)
 
   unlinked <- character(0)
-  f <- stub_ogr_on_path(spk_source_url)
-  mockery::stub(f, ".spk_source_resolve", function(...) local)
-  mockery::stub(f, ".spk_ogr2ogr", function(...) invisible(NULL))
+  f <- stub_ogr_on_path(bag_url)
+  mockery::stub(f, ".bag_source_resolve", function(...) local)
+  mockery::stub(f, ".bag_ogr2ogr", function(...) invisible(NULL))
   mockery::stub(f, "unlink", function(x, ...) {
     unlinked <<- c(unlinked, x)
     0L
@@ -472,12 +472,12 @@ testthat::test_that("an encoded source still registers its temp file for cleanup
 
 # ---- layer names derived from a query-string URL ----------------------------
 
-testthat::test_that("spk_source_url requires layer when a URL carries a query string", {
+testthat::test_that("bag_url requires layer when a URL carries a query string", {
   gpkg <- file.path(tempdir(), "layers.gpkg")
   url <- "https://example.com/ows?service=WFS&request=GetFeature&typeName=pub%3AX"
 
   msg <- tryCatch(
-    spk_source_url(path_gpkg = gpkg, urls = url, vsi = "curl_streaming"),
+    bag_url(path_gpkg = gpkg, urls = url, vsi = "curl_streaming"),
     error = conditionMessage
   )
   testthat::expect_match(msg, "layer")
@@ -494,8 +494,8 @@ testthat::test_that("the layer guard fires before any ogr2ogr runs", {
 
   gpkg <- file.path(tempdir(), "layers.gpkg")
   called <- FALSE
-  f <- stub_ogr_on_path(spk_source_url)
-  mockery::stub(f, ".spk_ogr2ogr", function(...) {
+  f <- stub_ogr_on_path(bag_url)
+  mockery::stub(f, ".bag_ogr2ogr", function(...) {
     called <<- TRUE
     invisible(NULL)
   })
@@ -516,8 +516,8 @@ testthat::test_that("a supplied layer makes a query-string URL legal", {
 
   gpkg <- file.path(tempdir(), "layers.gpkg")
   seen <- NULL
-  f <- stub_ogr_on_path(spk_source_url)
-  mockery::stub(f, ".spk_ogr2ogr", function(args, url) {
+  f <- stub_ogr_on_path(bag_url)
+  mockery::stub(f, ".bag_ogr2ogr", function(args, url) {
     seen <<- args
     invisible(NULL)
   })
@@ -539,8 +539,8 @@ testthat::test_that("a streaming source registers no temp-file cleanup", {
 
   gpkg <- file.path(tempdir(), "layers.gpkg")
   unlinked <- character(0)
-  f <- stub_ogr_on_path(spk_source_url)
-  mockery::stub(f, ".spk_ogr2ogr", function(...) invisible(NULL))
+  f <- stub_ogr_on_path(bag_url)
+  mockery::stub(f, ".bag_ogr2ogr", function(...) invisible(NULL))
   mockery::stub(f, "unlink", function(x, ...) {
     unlinked <<- c(unlinked, x)
     0L
@@ -566,13 +566,13 @@ testthat::test_that("a UTF-16 coordinate CSV becomes a point layer", {
   write_utf16le(c("Site,Longitude,Latitude", "S1,-127.1,54.2", "S2,-126.9,54.4"), src)
   on.exit(unlink(src), add = TRUE)
 
-  utf8 <- .spk_reencode(src, "UTF-16LE", "csv")
+  utf8 <- .bag_reencode(src, "UTF-16LE", "csv")
   on.exit(unlink(utf8), add = TRUE)
 
   gpkg <- seed_gpkg()
   on.exit(unlink(gpkg), add = TRUE)
 
-  args <- .spk_source_url_args(
+  args <- .bag_url_args(
     path_gpkg = gpkg,
     source = utf8,
     layer = "sites",
@@ -584,7 +584,7 @@ testthat::test_that("a UTF-16 coordinate CSV becomes a point layer", {
     a_srs = "EPSG:4326",
     update = TRUE
   )
-  .spk_ogr2ogr(args, src)
+  .bag_ogr2ogr(args, src)
 
   testthat::expect_true("sites" %in% sf::st_layers(gpkg)$name)
   got <- sf::st_read(gpkg, layer = "sites", quiet = TRUE)
@@ -593,7 +593,7 @@ testthat::test_that("a UTF-16 coordinate CSV becomes a point layer", {
   testthat::expect_equal(sf::st_crs(got)$epsg, 4326L)
 })
 
-testthat::test_that("spk_source_url creates the GeoPackage when it does not exist", {
+testthat::test_that("bag_url creates the GeoPackage when it does not exist", {
   skip_no_ogr()
   testthat::skip_if_not_installed("sf")
 
@@ -605,12 +605,12 @@ testthat::test_that("spk_source_url creates the GeoPackage when it does not exis
   on.exit(unlink(gpkg), add = TRUE)
   testthat::expect_false(file.exists(gpkg))
 
-  args <- .spk_source_url_args(
+  args <- .bag_url_args(
     path_gpkg = gpkg, source = src, layer = "sites",
     open_options = c("X_POSSIBLE_NAMES=Longitude", "Y_POSSIBLE_NAMES=Latitude"),
     a_srs = "EPSG:4326", update = FALSE
   )
-  .spk_ogr2ogr(args, src)
+  .bag_ogr2ogr(args, src)
 
   testthat::expect_true(file.exists(gpkg))
   testthat::expect_true("sites" %in% sf::st_layers(gpkg)$name)
@@ -620,11 +620,11 @@ testthat::test_that("a real ogr2ogr failure aborts with its stderr", {
   skip_no_ogr()
 
   gpkg <- file.path(tempdir(), "unused.gpkg")
-  args <- .spk_source_url_args(
+  args <- .bag_url_args(
     path_gpkg = gpkg,
     source = file.path(tempdir(), "definitely-not-here.csv"),
     layer = "x",
     update = FALSE
   )
-  testthat::expect_error(.spk_ogr2ogr(args, "definitely-not-here.csv"), "ogr2ogr failed")
+  testthat::expect_error(.bag_ogr2ogr(args, "definitely-not-here.csv"), "ogr2ogr failed")
 })

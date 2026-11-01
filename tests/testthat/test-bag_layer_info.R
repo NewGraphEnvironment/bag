@@ -1,10 +1,10 @@
-test_that("spk_layer_info returns layer information from GeoPackage", {
+test_that("bag_layer_info returns layer information from GeoPackage", {
   skip_if_not_installed("sf")
   
   # Use existing test data
   path <- system.file("extdata/poly.gpkg", package = "spacehakr")
   
-  result <- spk_layer_info(path)
+  result <- bag_layer_info(path)
   
   expect_s3_class(result, "data.frame")
   expect_true("name" %in% names(result))
@@ -12,18 +12,18 @@ test_that("spk_layer_info returns layer information from GeoPackage", {
   expect_true(nrow(result) > 0)
 })
 
-test_that("spk_layer_info identifies geometry type correctly", {
+test_that("bag_layer_info identifies geometry type correctly", {
   skip_if_not_installed("sf")
   
   path <- system.file("extdata/poly.gpkg", package = "spacehakr")
   
-  result <- spk_layer_info(path)
+  result <- bag_layer_info(path)
   
   # poly.gpkg should contain polygon geometry
   expect_true(any(grepl("POLYGON", result$geomtype, ignore.case = TRUE)))
 })
 
-test_that("spk_layer_info handles GeoPackage with multiple layers", {
+test_that("bag_layer_info handles GeoPackage with multiple layers", {
   skip_if_not_installed("sf")
   
   # Create temp GeoPackage with multiple layers
@@ -52,14 +52,14 @@ test_that("spk_layer_info handles GeoPackage with multiple layers", {
   sf::st_write(pts, tmpfile, layer = "points", quiet = TRUE)
   sf::st_write(poly, tmpfile, layer = "polygons", quiet = TRUE, append = TRUE)
   
-  result <- spk_layer_info(tmpfile)
+  result <- bag_layer_info(tmpfile)
   
   expect_equal(nrow(result), 2)
   expect_true("points" %in% result$name)
   expect_true("polygons" %in% result$name)
 })
 
-test_that("spk_layer_info returns NA for layers with no geometry", {
+test_that("bag_layer_info returns NA for layers with no geometry", {
   skip_if_not_installed("sf")
   
   # Create temp GeoPackage with empty layer
@@ -74,31 +74,31 @@ test_that("spk_layer_info returns NA for layers with no geometry", {
   
   sf::st_write(empty_sf, tmpfile, layer = "empty", quiet = TRUE)
   
-  result <- spk_layer_info(tmpfile)
+  result <- bag_layer_info(tmpfile)
   
   # Layer with 0 features returns NA for geomtype
-  # (tryCatch in spk_layer_info returns NA_character_ when geom length is 0)
+  # (tryCatch in bag_layer_info returns NA_character_ when geom length is 0)
   expect_equal(nrow(result), 1)
   expect_equal(result$name[1], "empty")
   expect_true(is.na(result$geomtype[1]))
 })
 
-test_that("spk_layer_info errors on non-existent file", {
+test_that("bag_layer_info errors on non-existent file", {
   skip_if_not_installed("sf")
   
   expect_error(
-    spk_layer_info("nonexistent.gpkg"),
+    bag_layer_info("nonexistent.gpkg"),
     # sf::st_layers will error on missing file
     class = "error"
   )
 })
 
-test_that("spk_layer_info does not include driver column", {
+test_that("bag_layer_info does not include driver column", {
   skip_if_not_installed("sf")
   
   path <- system.file("extdata/poly.gpkg", package = "spacehakr")
   
-  result <- spk_layer_info(path)
+  result <- bag_layer_info(path)
   
   # Driver column should be removed per function docs
   expect_false("driver" %in% names(result))

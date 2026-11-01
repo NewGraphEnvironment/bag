@@ -95,7 +95,7 @@
 #'
 #' @return Invisible `NULL`. Called for its side effects.
 #'
-#' @seealso [spk_geoserv_dlv()] for pulling a layer from a GeoServer WFS endpoint. It
+#' @seealso [bag_wfs()] for pulling a layer from a GeoServer WFS endpoint. It
 #'   builds the request from parts and writes a GeoJSON file to a directory; this
 #'   function takes an already-built URL straight into a GeoPackage layer.
 #'
@@ -104,7 +104,7 @@
 #' path_gpkg <- fs::path(tempdir(), "layers.gpkg")
 #'
 #' # a coordinate CSV published as UTF-16, landing as a point layer
-#' spk_source_url(
+#' bag_url(
 #'   path_gpkg = path_gpkg,
 #'   urls = "https://example.org/opendata/sites.csv",
 #'   layer = "sites",
@@ -120,7 +120,7 @@
 #' # a WFS GetFeature endpoint: /vsicurl/ cannot open this, and the query string leaves
 #' # no usable name to derive, so `layer` is required
 #' lyr <- "WHSE_BASEMAPPING.FWA_WATERSHED_GROUPS_POLY"
-#' spk_source_url(
+#' bag_url(
 #'   path_gpkg = path_gpkg,
 #'   urls = paste0(
 #'     "https://openmaps.gov.bc.ca/geo/pub/", lyr, "/ows",
@@ -139,7 +139,7 @@
 #' @importFrom cli cli_abort
 #' @importFrom fs path_dir file_exists
 #' @importFrom tools file_path_sans_ext
-spk_source_url <- function(path_gpkg,
+bag_url <- function(path_gpkg,
                            urls,
                            query = NULL,
                            layer = NULL,
@@ -218,7 +218,7 @@ spk_source_url <- function(path_gpkg,
 
   for (i in seq_along(urls)) {
     url <- urls[[i]]
-    source <- .spk_source_resolve(url, encoding, vsi)
+    source <- .bag_source_resolve(url, encoding, vsi)
     # `encoding` is the only branch that writes a temp file, and it is knowable before
     # the resolver runs. Inferring it by reconstructing the resolver's return value
     # instead would register a cleanup against a virtual path the moment `vsi` moves.
@@ -226,7 +226,7 @@ spk_source_url <- function(path_gpkg,
       tmp_files <- c(tmp_files, source)
     }
 
-    args <- .spk_source_url_args(
+    args <- .bag_url_args(
       path_gpkg = path_gpkg,
       source = source,
       layer = if (is.null(layer)) tools::file_path_sans_ext(basename(url)) else layer[[i]],
@@ -237,7 +237,7 @@ spk_source_url <- function(path_gpkg,
       update = fs::file_exists(path_gpkg)
     )
 
-    .spk_ogr2ogr(args, url)
+    .bag_ogr2ogr(args, url)
   }
 
   invisible(NULL)
@@ -256,7 +256,7 @@ spk_source_url <- function(path_gpkg,
 #' split at each `&`, leaving a trailing `count=1` that `sh` read as a successful variable
 #' assignment, so the command reported **status 0 having written nothing**; and a `-where`
 #' clause containing quotes and spaces died with a shell syntax error. Quoting happens
-#' here rather than in `.spk_source_url_args()` so the argument vector stays comparable by
+#' here rather than in `.bag_url_args()` so the argument vector stays comparable by
 #' equality in tests.
 #'
 #' @param args [character] Argument vector, excluding the command itself.
@@ -266,7 +266,7 @@ spk_source_url <- function(path_gpkg,
 #'
 #' @noRd
 #' @importFrom cli cli_abort
-.spk_ogr2ogr <- function(args, url) {
+.bag_ogr2ogr <- function(args, url) {
   err <- tempfile(fileext = ".txt")
   on.exit(unlink(err), add = TRUE)
 
@@ -316,7 +316,7 @@ stderr_tail <- function(path) {
 #' @noRd
 #' @importFrom httr2 request req_perform
 #' @importFrom tools file_ext
-.spk_source_resolve <- function(url, encoding = NULL, vsi = "curl") {
+.bag_source_resolve <- function(url, encoding = NULL, vsi = "curl") {
   if (is.null(encoding)) {
     return(paste0("/vsi", vsi, "/", url))
   }
@@ -325,12 +325,12 @@ stderr_tail <- function(path) {
   on.exit(unlink(raw_file), add = TRUE)
   httr2::req_perform(httr2::request(url), path = raw_file)
 
-  .spk_reencode(raw_file, encoding, tools::file_ext(url))
+  .bag_reencode(raw_file, encoding, tools::file_ext(url))
 }
 
 #' Re-encode a file to UTF-8
 #'
-#' Internal. Split from `.spk_source_resolve()` so it can be tested against a local
+#' Internal. Split from `.bag_source_resolve()` so it can be tested against a local
 #' fixture without a network fetch.
 #'
 #' @param path [character] File to convert.
@@ -340,7 +340,7 @@ stderr_tail <- function(path) {
 #' @return [character] Path of a new UTF-8 temp file.
 #'
 #' @noRd
-.spk_reencode <- function(path, encoding, ext = "csv") {
+.bag_reencode <- function(path, encoding, ext = "csv") {
   con <- file(path, encoding = encoding)
   on.exit(close(con), add = TRUE)
   lines <- readLines(con, warn = FALSE)
@@ -352,9 +352,8 @@ stderr_tail <- function(path) {
 
 #' Build the ogr2ogr argument vector for a single source
 #'
-#' Internal. Split out from [spk_source_url()] so the invocation can be tested by
-#' equality without GDAL installed, matching the argument-builder pattern used by
-#' [spk_gdalwarp()].
+#' Internal. Split out from [bag_url()] so the invocation can be tested by
+#' equality without GDAL installed.
 #'
 #' @param path_gpkg [character] Path to the output GeoPackage.
 #' @param source [character] Resolved source — a virtual filesystem path or a local file.
@@ -369,7 +368,7 @@ stderr_tail <- function(path) {
 #' @return [character] The argument vector, excluding the `ogr2ogr` command itself.
 #'
 #' @noRd
-.spk_source_url_args <- function(path_gpkg,
+.bag_url_args <- function(path_gpkg,
                                  source,
                                  layer,
                                  query = NULL,
@@ -385,7 +384,7 @@ stderr_tail <- function(path) {
     if (!is.null(open_options)) c(rbind("-oo", open_options)),
     if (!is.null(a_srs)) c("-a_srs", a_srs),
     if (!is.null(t_srs)) c("-t_srs", t_srs),
-    # Unquoted here by design: `.spk_ogr2ogr()` quotes the whole vector at the point of
+    # Unquoted here by design: `.bag_ogr2ogr()` quotes the whole vector at the point of
     # invocation, which keeps this builder comparable by equality in tests.
     if (!is.null(query)) c("-where", query),
     source

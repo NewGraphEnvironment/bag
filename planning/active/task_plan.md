@@ -101,50 +101,50 @@ Taken as conventional defaults, stated rather than asked:
 Two of these are not substitutions — `source_url` → `url` drops a word and `geoserv_dlv` →
 `wfs` is a new name — so the filenames are named above rather than derived.
 
-- [ ] `git mv` each `R/` file and its `tests/testthat/test-*.R` to match
-- [ ] Rename the internal helpers in `R/bag_url.R`: `.spk_ogr2ogr()`,
+- [x] `git mv` each `R/` file and its `tests/testthat/test-*.R` to match
+- [x] Rename the internal helpers in `R/bag_url.R`: `.spk_ogr2ogr()`,
       `.spk_source_resolve()`, `.spk_reencode()`, `.spk_source_url_args()` → `.bag_*`.
       Leave `stderr_tail()` undotted — the comment there records that cli glue needs it so
-- [ ] **The `mockery::stub()` targets are character strings**, at
+- [x] **The `mockery::stub()` targets are character strings**, at
       `test-spk_source_url.R:395, 396, 422, 428, 457, 458, 498` and two more below. `stub()`
       does not check that the named binding exists, so a missed string is a silent no-op
       that falls through to the **real** function — and in the block at `:382` that means a
       live `httr2` request in a suite whose own comment says no test touches the network,
       plus a real `ogr2ogr` shell-out. After renaming, assert no `\.spk_` string survives
       in `tests/`, and that each stub target resolves in the namespace
-- [ ] Re-point `@family`, `@seealso` and cross-references between the four. Includes
+- [x] Re-point `@family`, `@seealso` and cross-references between the four. Includes
       `R/spk_source_url.R:357`, an `@noRd` block referencing `[spk_gdalwarp()]` — invisible
       to `check` because `@noRd` generates no Rd, and a keeper→deleted reference
-- [ ] Decide the `@family` tags: after the prune only `download`, `vector` and `geoserver`
+- [x] Decide the `@family` tags: after the prune only `download`, `vector` and `geoserver`
       survive, the last two as single-member families. Collapse to one `download` family,
       or re-cut them once the intake lands in Phases 5–6
-- [ ] `devtools::document()`; delete the orphaned `man/spk_*.Rd`
+- [x] `devtools::document()`; delete the orphaned `man/spk_*.Rd`
 
 ## Phase 3 — Delete the ten helpers, and the imports they carried
 
 Safe because `ngr` holds independent copies and no consumer reaches these through this
 package — verified above, not assumed.
 
-- [ ] Delete `R/`, `tests/testthat/` and `man/` for: `spk_odm`, `spk_gdalwarp`,
+- [x] Delete `R/`, `tests/testthat/` and `man/` for: `spk_odm`, `spk_gdalwarp`,
       `spk_rast_ext`, `spk_rast_not_empty`, `spk_rast_rm_empty`, `spk_res`,
       `spk_stac_calc`, `spk_join`, `spk_poly_to_points`, `spk_q_layer_info`
-- [ ] Delete both `vignettes/articles/*.Rmd` — **each documents only
+- [x] Delete both `vignettes/articles/*.Rmd` — **each documents only
       `spk_stac_calc()`**, the sole package function either mentions
-- [ ] Delete `inst/extdata/test1.tif`, `test2.tif` and `points.gpkg`. **Keep
+- [x] Delete `inst/extdata/test1.tif`, `test2.tif` and `points.gpkg`. **Keep
       `poly.gpkg`** — read by a keeper's test at `test-spk_layer_info.R:5, 18, 99`;
       `points.gpkg` is read only by the deleted join test and by `README.Rmd:74`
-- [ ] `Imports:` 14 → **10**: `bcdata, chk, cli, dplyr, fs, glue, httr2, purrr, sf,
+- [x] `Imports:` 14 → **10**: `bcdata, chk, cli, dplyr, fs, glue, httr2, purrr, sf,
       stringr`. Dropping `terra`, `rlang` (only `@importFrom rlang .data` in the deleted
       join), `tibble` and `xml2` (both only in the deleted QGIS reader)
-- [ ] `Suggests:` keep only `mockery` and `testthat`. Drop `stars` (referenced nowhere in
+- [x] `Suggests:` keep only `mockery` and `testthat`. Drop `stars` (referenced nowhere in
       the repo), `rstac`, `leaflet`, `leafem`, `mapview`, `grDevices`, `kableExtra`
       (the STAC articles'), `processx` (the deleted tests'), and **`knitr` and `rmarkdown`**
       — reachable now only from `README.Rmd`, which is `.Rbuildignore`d, with no
       `VignetteBuilder` set
-- [ ] `R/utils.R`: keep `driver` and `name` in `globalVariables()` — used at
+- [x] `R/utils.R`: keep `driver` and `name` in `globalVariables()` — used at
       `bag_layer_info.R:38` and `:53`. Drop `.data`, `layer_name`, `time_exported`, and the
       dead `@importFrom stats setNames` (its only users were two deleted files)
-- [ ] Leave `tools`, `utils` and `stats` as they are: they appear in `NAMESPACE`
+- [x] Leave `tools`, `utils` and `stats` as they are: they appear in `NAMESPACE`
       `importFrom()` without being in `DESCRIPTION Imports:` today, CI is green, and the
       prune does not change that
 
