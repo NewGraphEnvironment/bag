@@ -381,3 +381,42 @@
   pins the one consumer and **must merge first**; `sred#26`'s title still says
   `spacehakr`, so `rnd_issue.sh` returns `NONE` here; the tag, the release and the
   post-merge CI watch are `/gh-pr-merge`'s
+
+## Session 2026-11-01 (UTC) — a planning measurement was false, and the pin rule caught it
+
+- **The plan's central justification for deleting the ten was wrong.** It recorded that
+  `ngr` "exports twelve *independent copies* and does **not** depend on spacehakr
+  (`ngr/DESCRIPTION` has no such line, in `Imports` or `Remotes`), so deleting
+  spacehakr's copies strands nobody." Measured against `ngr`'s `origin/main`: `spacehakr`
+  is in **`Imports:`** (line 40) and in **`Remotes:`** (line 47), and all twelve
+  `ngr_spk_*` functions are **deprecating forwarders** whose bodies are a single
+  `spacehakr::spk_*()` call. Every one of their targets is gone from `bag`
+- I had propagated that claim into `NEWS.md` and `CLAUDE.md`. Both corrected
+- **How it surfaced: the pin PR turned `rfp` CI red** with `dependency conflict` — the
+  exact failure `CLAUDE.md`'s "pin everywhere or nowhere" section describes, naming
+  neither package nor tags. Every prior `rfp` run was green and only this branch failed,
+  so the cause was not in doubt. `rfp` pinned, `ngr` unpinned, `rfp` depends on `ngr`
+- **The rule caught a wrong premise, not a bad pin.** The repo's *original* `CLAUDE.md`
+  said entries existed "in both `ngr` and `rfp`"; the planning session recorded that as
+  stale and corrected it to one consumer. The original was right
+- **Caller census, measured across 192 local checkouts** rather than taken from the plan:
+  six of the twelve have external callers (`geoserv_dlv`, `layer_info`, `gdalwarp`,
+  `join`, `odm`, `res`) and six have none. Only three repos are involved —
+  `restoration_wedzin_kwa_2024` (five), `stac_uav_bc` (`odm`),
+  `fish_passage_peace_2024_reporting` (`join`). GitHub code search rate-limited mid-run,
+  so the census is local-disk and says so
+- That census settles the umbrella issue's open ODM conditional from the other direction:
+  `stac_uav_bc` is `ngr_spk_odm`'s only caller, which makes it the clearest rehoming
+  candidate rather than a restore
+- **Both consumers pinned**, which `pak::lockfile_create("deps::.")` — the call rfp's CI
+  runs — now solves, tested before either PR merges:
+  [ngr PR #48](https://github.com/NewGraphEnvironment/ngr/pull/48) and
+  [rfp PR #419](https://github.com/NewGraphEnvironment/rfp/pull/419)
+- **The real fix is [ngr#47](https://github.com/NewGraphEnvironment/ngr/issues/47)**,
+  filed with the census: re-point two, rehome or restore four, delete six
+- **The local `ngr` checkout was ten commits stale.** Every finding above used
+  `origin/main`; had it used the working tree it would have found no `spacehakr` line at
+  all and confirmed the plan's error
+- `CLAUDE.md` now carries the enumeration command for finding every consumer that
+  declares the entry, because "pin everywhere" is only as good as the list
+- Merge order is now three deep: ngr#48, then rfp#419, then the rename

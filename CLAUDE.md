@@ -18,8 +18,11 @@ The package began as the `ngr_spk_*` family extracted from
 [ngr](https://github.com/NewGraphEnvironment/ngr). Of those twelve functions, two are still
 here under new names; the other ten were spatial and drone-imagery helpers with no caller
 in this package's namespace, and were deleted in the rename release. **`ngr` still exports its own
-independent copies of all twelve** and does not depend on this package, so the deletion
-stranded nobody — code calling `ngr_spk_*` is unaffected.
+deprecating forwarders for all twelve**, whose bodies call `spacehakr::spk_*()`, and it
+carries `spacehakr` in `Imports:`. It is therefore pinned to
+`NewGraphEnvironment/spacehakr@v0.4.2` — the last release before the rename — and keeps
+installing a package that still has them, so code calling `ngr_spk_*` is unaffected.
+Retiring those forwarders is tracked in `ngr`.
 
 Eleven more functions came the other way in the same release, from two older first-party
 packages whose subject is reporting rather than fetching; one was then dropped again as
@@ -189,10 +192,13 @@ white NG icon, white package-name text, Helvetica font.
 
 ### Pin this package in every consumer, or in none
 
-One consumer declares a `Remotes:` entry for this package. It is **being pinned** to
-`@v0.4.2` for the duration of the rename — the one-line PR is open and has to merge
-before this package's rename does — and unpinned once its own switch PR lands. If a
-pin is ever wanted again after that, add it to *every* consumer in the same change.
+**Two** consumers declare a `Remotes:` entry for this package, `ngr` and `rfp`, and both
+are being pinned to `@v0.4.2` for the duration of the rename — one-line PRs in each,
+which have to merge before this package's rename does. They come off when each switches.
+
+An earlier measurement here recorded that only one consumer declared the entry. It was
+wrong, and the wrongness was invisible until the pin went into that one and `pak`
+refused the whole solve.
 
 **Why:** `Remotes:` pins are declared per-repo but resolved globally. When one consumer
 pins `@v0.2.0` while another pins `@v0.1.0`, `pak` is asked for one package at two tags
@@ -204,7 +210,15 @@ follows GitHub's repository redirect and installs a package *named* `bag`, which
 `Imports: spacehakr` unsatisfiable.
 
 **How to apply:** pin everywhere or nowhere — mixing is the only option that fails
-outright. Unpinned, accept that a break on this package's default branch can turn a
+outright, and *everywhere* means every consumer that declares the entry, not every
+consumer you remember. Enumerate them before pinning any:
+
+```bash
+for r in $(gh repo list NewGraphEnvironment --limit 200 --json name -q '.[].name'); do
+  gh api "repos/NewGraphEnvironment/$r/contents/DESCRIPTION" --jq .content 2>/dev/null \
+    | base64 -d | grep -q 'NewGraphEnvironment/bag' && echo "$r"
+done
+``` Unpinned, accept that a break on this package's default branch can turn a
 consumer's CI red on an unrelated PR. Tags exist from `v0.1.0` for anyone wanting a
 reproducible install, and `v0.4.2` is the last one before the rename and the deletions.
 

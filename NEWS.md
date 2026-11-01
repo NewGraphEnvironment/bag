@@ -33,9 +33,15 @@ redirects repository URLs but not Pages paths. The site is now
 `spk_stac_calc()`. These were raster, drone-imagery and STAC helpers — a different subject
 — and nothing called them under these names.
 
-**`ngr` exports its own independent copies of all ten and does not depend on this
-package**, so code calling `ngr_spk_*` is unaffected. That is where this family came from
-and where it remains.
+**`ngr` keeps serving all ten, and it is pinned so that it can.** Its `ngr_spk_*`
+functions are deprecating forwarders whose bodies call `spacehakr::spk_*()`, and it
+carries `spacehakr` in `Imports:`. So `ngr` pins `NewGraphEnvironment/spacehakr@v0.4.2`,
+the last release before this one, and keeps installing a package that still has them.
+Code calling `ngr_spk_*` is unaffected.
+
+Retiring those forwarders — re-pointing the two whose targets survive here under new
+names, rehoming the four that have callers and no successor, deleting the six that have
+neither — is tracked in `ngr` rather than here.
 
 The two pkgdown articles went with them: both documented only `spk_stac_calc()`.
 
