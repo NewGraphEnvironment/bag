@@ -489,8 +489,11 @@ does half the work, and is immune to the data-masking trap a bare variable insid
 
 ## Validation
 
-- [ ] Tests pass
-- [ ] `/code-check` clean (each commit, or once over the branch with `/code-check branch`)
+- [x] Tests pass — FAIL 0 | WARN 0 | SKIP 2 | PASS 377, `lintr` 0,
+      `check(vignettes = FALSE)` 0/0/0
+- [ ] `/code-check` clean (each commit, or once over the branch with `/code-check branch`).
+      Round 1: 9 findings, all fixed. Round 2: 6, **two inside round 1's fixes**, all
+      fixed — so the loop ends on an enumeration, not on a quiet round. Round 3 running
 - [ ] PWF checkboxes match landed work
 - [ ] `/planning-archive` on completion
 

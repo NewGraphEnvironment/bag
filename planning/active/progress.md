@@ -237,3 +237,65 @@
   consistent, so the renamed `catalogue` concept still reaches every export
 - Next: `/code-check branch`. Phase 1 — the repository rename — is still with the owner,
   and 4b, 7's release and 8 remain blocked on it
+
+## Session 2026-11-01 (UTC) — Phase 9 and 11 landed, then three rounds of branch review
+
+- **Phase 9 and 11 done in one pass per file** (`0226823`), as Phase 11 asked. Ten exports
+  and two internals renamed; 305 substitutions in one alternation pass whose pattern
+  refuses a name already carrying a leading dot, so the new internals cannot gain a
+  second one on a re-run. `magrittr` out of `Imports`, the four `.lintr` exclusions out
+  with it
+- The `@family` counts the plan stated as totals needed a per-function call it never
+  made. `bag_bcdc` moved download -> catalogue, which is what the rename table means by
+  "one stem for the catalogue family"; `bag_gpx_import` moved files -> download, which is
+  what makes download three — of the five file helpers it is the only one that brings
+  data in from outside the project, and its section renders as "Fetch"
+- **`dplyr::arrange(epsg)` was dead after the rewrite.** A mutation test found it:
+  deleting it left the row-order test green, because the sorted loop keys order the rows
+  now. Reversing those keys takes the test red, so the invariant is still pinned
+- **`/code-check branch` ran three rounds against the merge-base diff.** Round 1 found 9
+  defects, round 2 found 6 — **two of them inside round 1's own fixes** — which under the
+  skill's rule means the loop ends on an enumeration rather than on a quiet round
+- Every finding was reproduced before being fixed and every fix mutation-checked in a
+  copy of the tree: 10 mutations red for round 1, 9 for round 2
+- **The worst was data loss, and it was mine.** `bag_assign_utm()` on a row with empty or
+  NA geometry: `sort()` dropped its NA zone, and `epsg == epsg_zone` was then NA in every
+  pass, which `[.data.frame` answers with a fabricated all-NA row. Four rows in, six out,
+  the real row's attributes gone — and `bag_gpkg_refresh()` wrote that over the
+  GeoPackage. A field row entered without a GPS fix is exactly this input. The donor's
+  `group_split()` path *aborted* here; the Phase 11 rewrite turned a loud failure into a
+  silent one. Rows now carry through with NA coordinate columns, as the sibling does
+- **Second data loss, this one carried in and made worse here.**
+  `bag_gpkg_refresh(write_back_to_path = TRUE)` deleted the whole GeoPackage and wrote one
+  layer named after the file: `sites` + `aoi` came back as `form_fiss_site_2026` alone.
+  The donor had the same `delete_dsn`, but wrote without `quiet = TRUE`, so a user saw the
+  rename; this branch had silenced it. Now `delete_layer` with an explicit `layer =`, so
+  one layer is replaced and a saved QGIS style and `gpkg_metadata` both survive
+- **Both of round 2's in-fix findings were guards written against a symptom rather than
+  the property.** `is.na(crs_in)` stood in for "unusable CRS" — and can never be true for
+  a GeoPackage, because GDAL resolves the format's reserved `srs_id` −1 and 0 into real
+  CRS objects, so the branch had no reachable true case and no mutation could find it. A
+  layer count stood in for "ambiguous or destructive", and counted QGIS's `layer_styles`,
+  refusing the documented use case
+- **One class closed by enumeration rather than by another fix.** Three times in this
+  branch a cli plural marker went in without a quantity in its own string. Rather than
+  fix the third and move on, all nine markers in `R/` were listed by parsing the files
+  and then *rendered* at n = 1 and n = 2 — because "has a substitution before it" is a
+  proxy, and a length-1 interpolation resets the quantity. All nine read correctly
+- `DBI` and `RSQLite` went into `Suggests`: the new fixtures reach them with `::`, which
+  `devtools::test()` allows and `R CMD check` does not
+- Two `object_usage_linter` warnings were removed by restructuring rather than suppressed
+  — the variable now appears in the `if` condition, and the purrr formula is an anonymous
+  function lintr can see into
+- **Three pre-existing defects filed rather than fixed**, since this branch only renamed
+  those bodies: [#32](https://github.com/NewGraphEnvironment/spacehakr/issues/32) a
+  non-200 WFS body left on disk as `.geojson`,
+  [#33](https://github.com/NewGraphEnvironment/spacehakr/issues/33) `bag_wfs()`
+  reprojecting an undensified bbox rectangle, and
+  [#34](https://github.com/NewGraphEnvironment/spacehakr/issues/34) `bag_bcdc(mask =)`
+  writing a GEOMETRYCOLLECTION QGIS will not draw
+- `devtools::test()`: FAIL 0 | WARN 0 | SKIP 2 | PASS 377, from 298. `lintr`: 0.
+  `check(vignettes = FALSE)`: 0/0/0
+- Commits: `0226823` (Phase 9 + 11), `752fa1d` (round 1's nine), `fc244d8` (round 2's six)
+- Next: round 3's mechanism and enumeration. Phase 1 — the repository rename — is still
+  with the owner, and 4b, 7's release and 8 remain blocked on it
