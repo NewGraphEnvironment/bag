@@ -288,3 +288,18 @@ testthat::test_that("bag_assign_utm names only the coordinate argument that is a
   testthat::expect_no_match(msg, "col_easting")
   testthat::expect_match(msg, "does not name a column")
 })
+
+testthat::test_that("bag_assign_utm refuses an object whose CRS is unusable", {
+  testthat::skip_if_not_installed("sf")
+
+  # The same check its siblings over this container make. Without it the failure came
+  # out of GDAL several steps later, naming neither the argument nor the CRS.
+  # easting/northing present so the absent-column warning does not fire here; this test
+  # is about the CRS abort and nothing else.
+  d <- sf::st_as_sf(
+    data.frame(site = c("a", "b"), x = c(1, 2), y = c(1, 2), easting = 0, northing = 0),
+    coords = c("x", "y"), crs = NA
+  )
+
+  testthat::expect_error(bag_assign_utm(d), "no usable CRS")
+})

@@ -122,3 +122,35 @@ testthat::test_that("bag_assign_latlong round trips a CRS with no EPSG code", {
   testthat::expect_equal(sf::st_crs(out), sf::st_crs(d))
   testthat::expect_equal(round(out$lon, 4), c(-128.5, -123.5))
 })
+
+testthat::test_that("bag_assign_latlong treats an unplaceable row as its sibling does", {
+  testthat::skip_if_not_installed("sf")
+
+  # It wrote NaN and said nothing, where bag_assign_utm() writes NA and warns. NaN is an
+  # NA in R and reaches disk as NULL or an empty field either way, so the difference that
+  # mattered was the silence.
+  d <- sf::st_sf(
+    site = c("a", "b"),
+    geometry = sf::st_sfc(sf::st_point(c(-128.5, 54.5)), sf::st_point(), crs = 4326)
+  )
+
+  w <- testthat::expect_warning(bag_assign_latlong(d), "no usable coordinates")
+  testthat::expect_match(conditionMessage(w), "1 row")
+
+  out <- suppressWarnings(bag_assign_latlong(d))
+  testthat::expect_equal(nrow(out), 2L)
+  testthat::expect_true(is.na(out$lon[out$site == "b"]))
+  testthat::expect_false(is.nan(out$lon[out$site == "b"]))
+  testthat::expect_equal(out$lon[out$site == "a"], -128.5)
+})
+
+testthat::test_that("bag_assign_latlong refuses an object whose CRS is unusable", {
+  testthat::skip_if_not_installed("sf")
+
+  d <- sf::st_as_sf(
+    data.frame(site = c("a", "b"), x = c(1, 2), y = c(1, 2)),
+    coords = c("x", "y"), crs = NA
+  )
+
+  testthat::expect_error(bag_assign_latlong(d), "no usable CRS")
+})

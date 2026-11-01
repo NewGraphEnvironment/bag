@@ -67,6 +67,17 @@ bag_assign_utm <- function(dat = NULL,
     ))
   }
 
+  # The same check its siblings make over this container. An sf object whose CRS is
+  # missing, or is one of the GeoPackage format's "undefined" placeholders, aborts out of
+  # GDAL several steps later with a message naming neither the argument nor the CRS.
+  if (.bag_crs_unusable(sf::st_crs(dat))) {
+    cli::cli_abort(c(
+      "{.arg dat} has no usable CRS.",
+      i = "Coordinates are derived by reprojecting, so the CRS has to be known.",
+      i = "Set one with {.fn sf::st_crs} first."
+    ))
+  }
+
   # The CRS object, not its EPSG code. `st_crs(parameters = TRUE)$epsg` is NA for any CRS
   # with no authority -- a proj string, or a WKT without one -- and st_transform(crs = NA)
   # then aborts with "crs not found: is it missing?", naming neither the argument nor the
@@ -138,12 +149,7 @@ bag_assign_utm <- function(dat = NULL,
 
   n_unplaced <- sum(!placed)
   if (n_unplaced > 0) {
-    cli::cli_warn(c(
-      "{n_unplaced} row{?s} of {.arg dat} ha{?s/ve} no usable coordinates.",
-      i = "{cli::qty(n_unplaced)}{?Its/Their} {.field {col_zone}}, {.field {col_easting}}
-            and {.field {col_northing}} are NA; every other column is kept.",
-      i = "An empty geometry, or an NA coordinate, does this."
-    ))
+    .bag_warn_unplaced(n_unplaced, c(col_zone, col_easting, col_northing))
     groups <- c(groups, list(add_na_coords(dat2[!placed, ])))
   }
 

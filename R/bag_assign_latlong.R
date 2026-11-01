@@ -36,6 +36,17 @@ bag_assign_latlong <- function(dat = NULL,
   chk::chk_string(col_lon)
   chk::chk_string(col_lat)
 
+  # The same check its siblings make over this container. An sf object whose CRS is
+  # missing, or is one of the GeoPackage format's "undefined" placeholders, aborts out of
+  # GDAL several steps later with a message naming neither the argument nor the CRS.
+  if (.bag_crs_unusable(sf::st_crs(dat))) {
+    cli::cli_abort(c(
+      "{.arg dat} has no usable CRS.",
+      i = "Coordinates are derived by reprojecting, so the CRS has to be known.",
+      i = "Set one with {.fn sf::st_crs} first."
+    ))
+  }
+
   # The CRS object, not its EPSG code: `st_crs(parameters = TRUE)$epsg` is NA for a CRS
   # with no authority, and st_transform(crs = NA) then aborts naming nothing.
   crs_og <- sf::st_crs(dat)
@@ -46,10 +57,20 @@ bag_assign_latlong <- function(dat = NULL,
   # of the same name cannot shadow the local vector inside mutate().
   xy <- sf::st_coordinates(dat_wgs)
 
+  # A row with empty or NA geometry reads back as NaN here. Its sibling bag_assign_utm()
+  # writes NA for the same input and says so; this one wrote NaN and said nothing. NaN is
+  # an NA in R and reaches disk as a NULL or an empty field either way, so the difference
+  # that mattered was the silence.
+  lon <- xy[, 1]
+  lat <- xy[, 2]
+  lon[is.nan(lon)] <- NA_real_
+  lat[is.nan(lat)] <- NA_real_
+  .bag_warn_unplaced(sum(is.na(lon)), c(col_lon, col_lat))
+
   dat_wgs |>
     dplyr::mutate(
-      {{ col_lon }} := !!xy[, 1],
-      {{ col_lat }} := !!xy[, 2]
+      {{ col_lon }} := !!lon,
+      {{ col_lat }} := !!lat
     ) |>
     sf::st_transform(crs = crs_og)
 }

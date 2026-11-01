@@ -87,22 +87,30 @@ bag_gpkg_refresh <- function(path_gpkg = NULL,
   # such as QGIS's `layer_styles`, and a styled Mergin field form is the documented use
   # case, so counting those refused the very files this function is for. The
   # discriminator is the property itself: a support table has no geometry type.
-  layers <- sf::st_layers(path_gpkg)
-  has_geom <- vapply(
-    layers$geomtype,
-    function(g) length(g) > 0 && !all(is.na(g)),
-    logical(1)
-  )
-  spatial <- layers$name[has_geom]
+  layers <- .bag_gpkg_layers(path_gpkg)
 
-  if (length(spatial) != 1L) {
+  if (length(layers$name) != 1L) {
     cli::cli_abort(c(
       "{.arg path_gpkg} must hold exactly one spatial layer.",
-      x = "{.path {path_gpkg}} holds {length(spatial)}: {.val {spatial}}.",
+      x = "{.path {path_gpkg}} holds {length(layers$name)}: {.val {layers$name}}.",
       i = "Which one to refresh would otherwise be decided by layer order."
     ))
   }
-  layer_name <- spatial
+  layer_name <- layers$name
+
+  # The same CRS check bag_gpkg_to_geojson() makes, for the same reason: a GeoPackage
+  # layer with no spatial reference reads back as a real CRS object, not as NA, so
+  # without this an `srs_id` of 0 was taken for WGS 84 and the UTM zone derived from
+  # coordinates that are not degrees, while -1 aborted out of GDAL naming neither the
+  # layer nor the CRS.
+  if (.bag_crs_unusable(layers$crs[[1]])) {
+    cli::cli_abort(c(
+      "The layer in {.arg path_gpkg} has no usable CRS.",
+      x = "{.path {path_gpkg}}, layer {.val {layer_name}}.",
+      i = "Coordinates are derived by reprojecting, so the layer's CRS has to be known.",
+      i = "Set one with {.fn sf::st_crs} first."
+    ))
+  }
 
   dat <- sf::st_read(dsn = path_gpkg, layer = layer_name, quiet = TRUE)
 

@@ -140,3 +140,69 @@ testthat::test_that("bag_sf_from_utm returns an sf object on a zero-row input", 
   testthat::expect_true(sf::st_crs(out) == sf::st_crs(3005))
   testthat::expect_equal(attr(out, "sf_column"), "geom")
 })
+
+testthat::test_that("bag_sf_from_utm reads back what bag_assign_utm writes", {
+  testthat::skip_if_not_installed("sf")
+
+  # The two are documented as partners. bag_assign_utm() writes NA zone, easting and
+  # northing for a row it could not place, and handing that straight back here aborted
+  # from inside sf -- "missing values in coordinates not allowed" -- naming a
+  # group_split() index rather than a row or a column.
+  d <- sf::st_sf(
+    site = c("a", "b", "c"),
+    geometry = sf::st_sfc(
+      sf::st_point(c(-128.5, 54.5)), sf::st_point(), sf::st_point(c(-118.5, 54.5)),
+      crs = 4326
+    )
+  )
+  written <- sf::st_drop_geometry(suppressWarnings(bag_assign_utm(d)))
+
+  back <- suppressWarnings(bag_sf_from_utm(written))
+
+  testthat::expect_s3_class(back, "sf")
+  testthat::expect_equal(nrow(back), nrow(written))
+  testthat::expect_setequal(back$site, d$site)
+  testthat::expect_true(sf::st_is_empty(back)[back$site == "b"])
+  testthat::expect_false(any(sf::st_is_empty(back)[back$site != "b"]))
+})
+
+testthat::test_that("bag_sf_from_utm says so when it cannot place a row", {
+  testthat::skip_if_not_installed("sf")
+
+  d <- data.frame(
+    site = c("a", "b"),
+    utm_zone = c(9, NA),
+    easting = c(532381, NA),
+    northing = c(6039269, NA)
+  )
+
+  w <- testthat::expect_warning(bag_sf_from_utm(d), "no usable coordinates")
+  testthat::expect_match(conditionMessage(w), "1 row")
+})
+
+testthat::test_that("bag_sf_from_utm rejects a zone column that is not numeric", {
+  # readr returns character for a csv column that was entirely empty, and the abort then
+  # came from inside sf naming a group_split() index.
+  d <- data.frame(
+    utm_zone = c("9", "10"),
+    easting = c(5e5, 5e5),
+    northing = c(6e6, 6e6)
+  )
+
+  err <- testthat::expect_error(bag_sf_from_utm(d), "must be numeric")
+  testthat::expect_match(conditionMessage(err), "utm_zone")
+  testthat::expect_match(conditionMessage(err), "character")
+})
+
+testthat::test_that("bag_sf_from_utm rejects a zone outside 1 to 60", {
+  d <- data.frame(
+    utm_zone = c(9, 99),
+    easting = c(5e5, 5e5),
+    northing = c(6e6, 6e6)
+  )
+
+  err <- testthat::expect_error(bag_sf_from_utm(d), "1 to 60")
+  # the row and the value, so a caller can find it
+  testthat::expect_match(conditionMessage(err), "Row 2")
+  testthat::expect_match(conditionMessage(err), "99")
+})

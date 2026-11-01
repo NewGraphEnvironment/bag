@@ -219,3 +219,30 @@ testthat::test_that("bag_gpkg_to_geojson writes nothing when one of several laye
   )
   testthat::expect_length(list.files(dir_out, pattern = "[.]geojson$"), 0L)
 })
+
+testthat::test_that("bag_gpkg_to_geojson converts a GeoPackage carrying a QGIS style table", {
+  testthat::skip_if_not_installed("sf")
+  testthat::skip_if_not_installed("RSQLite")
+  testthat::skip_if_not_installed("DBI")
+
+  # The sibling over the same container, bag_gpkg_refresh(), was taught to ignore
+  # aspatial support tables; this one was not, and refused a styled GeoPackage outright
+  # -- with a remedy ("set a CRS on it") that cannot be carried out on a style table.
+  dir_in <- seed_gpkg()
+  dir_out <- tempfile("styled_out_")
+  on.exit(unlink(c(dir_in, dir_out), recursive = TRUE), add = TRUE)
+  path <- fs::path(dir_in, "source.gpkg")
+  con <- DBI::dbConnect(RSQLite::SQLite(), path)
+  DBI::dbExecute(
+    con,
+    "CREATE TABLE layer_styles (id INTEGER PRIMARY KEY, f_table_name TEXT, styleqml TEXT)"
+  )
+  DBI::dbDisconnect(con)
+  testthat::expect_length(sf::st_layers(path)$name, 2L)
+
+  out <- bag_gpkg_to_geojson(dir_in = dir_in, dir_out = dir_out, file_name_in = "source")
+
+  testthat::expect_length(out, 1L)
+  testthat::expect_true(fs::file_exists(out[[1]]))
+  testthat::expect_false(fs::file_exists(fs::path(dir_out, "layer_styles.geojson")))
+})

@@ -365,3 +365,25 @@ testthat::test_that("bag_gpkg_refresh accepts a form carrying a QGIS style table
     1L
   )
 })
+
+testthat::test_that("bag_gpkg_refresh refuses a layer whose CRS is undefined", {
+  testthat::skip_if_not_installed("sf")
+
+  # The sibling over the same container, bag_gpkg_to_geojson(), checks this; this one
+  # did not, so an srs_id of 0 had its coordinates taken for WGS 84 and a UTM zone
+  # derived from numbers that are not degrees, while -1 aborted out of GDAL naming
+  # neither the layer nor the CRS.
+  path <- fs::path(tempfile("nocrs_refresh_"), "sites.gpkg")
+  fs::dir_create(dirname(path))
+  on.exit(unlink(dirname(path), recursive = TRUE), add = TRUE)
+  d <- sf::st_as_sf(
+    data.frame(site = c("a", "b"), x = c(1, 2), y = c(1, 2)),
+    coords = c("x", "y"), crs = NA
+  )
+  suppressWarnings(sf::st_write(d, path, layer = "sites", quiet = TRUE))
+
+  testthat::expect_error(
+    bag_gpkg_refresh(path_gpkg = path, write_to_csv = FALSE, write_to_rdata = FALSE),
+    "no usable CRS"
+  )
+})

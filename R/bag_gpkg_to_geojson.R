@@ -54,11 +54,13 @@ bag_gpkg_to_geojson <- function(dir_in, dir_out, file_name_in) {
 
   fs::dir_create(dir_out)
 
-  layers <- sf::st_layers(gpkg_path)
+  # Spatial layers only. A QGIS style table is a layer to st_layers() and has no CRS, so
+  # counting it made a styled GeoPackage unconvertible, with a remedy that cannot be run.
+  layers <- .bag_gpkg_layers(gpkg_path)
   layer_names <- layers$name
 
   if (length(layer_names) == 0) {
-    cli::cli_abort("{.path {gpkg_path}} contains no layers.")
+    cli::cli_abort("{.path {gpkg_path}} contains no spatial layers.")
   }
 
   # Checked over every layer first, so the loop below cannot abort part way and leave a
@@ -66,7 +68,8 @@ bag_gpkg_to_geojson <- function(dir_in, dir_out, file_name_in) {
   unreferenced <- layer_names[vapply(layers$crs, .bag_crs_unusable, logical(1))]
   if (length(unreferenced) > 0) {
     cli::cli_abort(c(
-      "{.path {gpkg_path}} has {length(unreferenced)} layer{?s} with no usable CRS:        {.val {unreferenced}}.",
+      "{.path {gpkg_path}} has {length(unreferenced)} layer{?s} with no usable CRS: \
+       {.val {unreferenced}}.",
       i = "GeoJSON is WGS 84 by definition, so coordinates with no CRS cannot be
            written correctly.",
       i = "{cli::qty(length(unreferenced))}Set a CRS on {?it/them} first, with
