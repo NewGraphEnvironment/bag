@@ -202,25 +202,36 @@ Reprefix only, per the gate: the donor stems are kept and only the prefix change
       `bag_meta_bcd_xref_pkg_schtab()` helper
 - [x] `bag_meta_bcd_xref_col_comments()` — the column-comments companion
 - [x] `bag_bcd_get_data()` — the catalogue reader
-- [ ] `bag_gpx_import()` — the GPX reader
-- [ ] `bag_gpkg_to_geojson()` — the GeoPackage-to-GeoJSON converter
-- [ ] `bag_u_rm_gpkg_layers()` — the GeoPackage layer remover
-- [ ] `bag_fs_backup()` — the field-file backup
+- [x] `bag_gpx_import()` — the GPX reader
+- [x] `bag_gpkg_to_geojson()` — the GeoPackage-to-GeoJSON converter
+- [x] `bag_u_rm_gpkg_layers()` — the GeoPackage layer remover
+- [x] `bag_fs_backup()` — the field-file backup
 - [x] Tests for the column-comments companion (the first of the four with none)
-- [ ] Tests for the GPX reader, the GeoJSON converter and the layer remover
+- [x] Tests for the GPX reader, the GeoJSON converter and the layer remover
 - [x] Fixed in the catalogue reader: it called `cli::` with no `@importFrom cli`
-- [ ] Fix the GeoJSON converter's unused `@importFrom dplyr` and undeclared `chk::`
+- [x] Fix the GeoJSON converter's unused `@importFrom dplyr` and undeclared `chk::`
 - [x] **A third defect, found by the new tests and not predicted by either issue:**
       `bag_meta_bcd_xref()` joined `bcdata_lookup_raw` to `object_names` on `package_name`
       alone, which is not a key — a package publishing N WMS resources gave N^2 rows, and
       N^2-N of them paired one resource's object name with another's dataset id and
       download URL. Measured 6 rows where 4 are correct. Now joined on the row index too.
       Reported to the donor, which still ships it
-- [ ] Decide the layer remover's fate before porting: it is badged
-      `lifecycle::badge("superseded")` in favour of `gdalraster::ogr_layer_delete()`. Port
-      it as-is, port it rewritten on `gdalraster`, or retire it instead of moving it
-- [ ] Add the imports the intake needs (`janitor` for the reader's name cleaning, and
-      whatever the GPX and backup paths reach) — stated in `DESCRIPTION`, not inherited
+- [x] Decided: ported, badge kept, defects fixed. The gate chose the full intake, so
+      retiring one of the seven unilaterally was not mine to do; and reading it turned up a
+      **data-loss defect** that made porting it unchanged unacceptable — see below. A
+      `gdalraster` rewrite is a separate issue, not this one
+- [x] Imports stated, not inherited: `janitor`, `lubridate`, and `rlang` and `tibble`
+      back after Phase 3 dropped them. `Suggests` gains `lifecycle` (the superseded badge)
+      and `withr` (the timezone test)
+- [x] **Four more defects found while porting, none predicted by either issue:**
+      the GPX reader passed `pattern` and `full.names` to `fs::dir_ls()`, which takes
+      neither, so they were absorbed silently and **every file** in the track directories
+      was read as GPX; its waypoint listing used an unanchored `".gpx"` regex that also
+      matched `weird_gpx.csv`; it compared a POSIXct time column against bare strings, so
+      the filter boundary moved 8 hours between a Pacific machine and a UTC one; and the
+      layer remover read `system2(stdout = TRUE)`, which only **warns** on a non-zero exit,
+      then overwrote the original GeoPackage regardless — a failed layer copy silently
+      produced a file missing layers nobody asked to remove
 
 ## Phase 6 — Take in `fpr`'s four
 

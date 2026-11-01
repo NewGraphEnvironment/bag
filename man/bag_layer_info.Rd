@@ -32,5 +32,11 @@ layer_info <- bag_layer_info("path/to/data.gpkg")
 }
 \seealso{
 \code{\link[sf:st_layers]{sf::st_layers()}}, \code{\link[sf:st_read]{sf::st_read()}}, \code{\link[sf:st_geometry_type]{sf::st_geometry_type()}}
+
+Other files: 
+\code{\link{bag_fs_backup}()},
+\code{\link{bag_gpkg_to_geojson}()},
+\code{\link{bag_gpx_import}()},
+\code{\link{bag_u_rm_gpkg_layers}()}
 }
 \concept{files}

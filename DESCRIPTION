@@ -19,8 +19,10 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Suggests:
+    lifecycle,
     mockery,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    withr
 Config/DOI: 10.5281/zenodo.23524742
 Config/testthat/edition: 3
 URL: https://github.com/NewGraphEnvironment/spacehakr, https://newgraphenvironment.github.io/spacehakr/
@@ -34,6 +36,7 @@ Imports:
     glue,
     httr2,
     janitor,
+    lubridate,
     purrr,
     rlang,
     sf,

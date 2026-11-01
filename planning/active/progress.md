@@ -67,4 +67,32 @@
   the reference index covers every topic and 4b's URL fix is all that stands between the
   branch and a clean check
 - Also filed ngr#46 for the `stringr::fixed()` defect in the rename machinery
-- Next: the remaining four of Phase 5, then Phase 6. Phase 1 still with the user
+- Phase 5 complete: the GPX reader, the GeoJSON converter, the layer remover and the
+  field-file backup ported, with tests for all three that had none
+- Four more defects found while porting these, none predicted by either issue. The GPX
+  reader passed `pattern` and `full.names` to `fs::dir_ls()`, which takes neither, so they
+  were absorbed silently and **every file** in the track directories was read as GPX
+  (measured: four files in a directory, four read). Its waypoint listing used an unanchored
+  `".gpx"` regex that also matched `weird_gpx.csv`. It compared a POSIXct column against
+  bare date strings, so the filter boundary sat 8 hours apart on a Pacific machine and a
+  UTC one. And the layer remover read `system2(stdout = TRUE)`, which only **warns** on a
+  non-zero exit, then overwrote the original GeoPackage regardless — a failed layer copy
+  silently produced a file missing layers nobody asked to remove
+- The GPX reader's personal defaults are gone: a `~/Library/CloudStorage/OneDrive-Personal`
+  path, `layer_output_name = "2024_ai"` and `gpkg_name = "gps_2024"`. Checked first that
+  removing them breaks nobody — all three consumer call sites pass every argument by name.
+  A personal directory layout also has no place in a public package's defaults
+- Two bugs of my own, both caught by the tests rather than by reading: a cli pluralisation
+  marker placed before its quantity, which fails with "Multiple quantities for
+  pluralization" and **replaces the whole message**, hiding which layers were missing; and
+  `st_layers()` on a temp file a stub never created, which aborts with GDAL's "Open failed"
+  before reaching the completeness check
+- Five mutation checks, all red: the timezone fix (4 tests), the two file filters (1 each),
+  the temp-file guard (1), the ogr2ogr status check (1). The first run of two of these came
+  back **green** — the `perl` escaping never matched the file, so nothing was mutated. Only
+  asserting the substitution applied before running caught it. Re-run with python: both red
+- One test was also rewritten because it could not reach its failure: the timezone fixture
+  sat months from the boundary, where an 8-hour shift is invisible. It now sits at 04:00 UTC
+  on the boundary day, inside the offset, and runs under `TZ=America/Vancouver`
+- `devtools::test()`: FAIL 0 | WARN 0 | SKIP 2 | PASS 218, up from 148. Eleven exports
+- Next: Phase 6 (fpr's four). Phase 1 still with the user, and 4b, 7 and 8 wait on it
