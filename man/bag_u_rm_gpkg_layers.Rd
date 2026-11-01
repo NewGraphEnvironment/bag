@@ -39,6 +39,7 @@ Other files:
 \code{\link{bag_fs_backup}()},
 \code{\link{bag_gpkg_to_geojson}()},
 \code{\link{bag_gpx_import}()},
-\code{\link{bag_layer_info}()}
+\code{\link{bag_layer_info}()},
+\code{\link{bag_sp_gpkg_backup}()}
 }
 \concept{files}

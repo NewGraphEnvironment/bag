@@ -235,18 +235,40 @@ Reprefix only, per the gate: the donor stems are kept and only the prefix change
 
 ## Phase 6 — Take in `fpr`'s four
 
-- [ ] Port `fpr_sp_gpkg_backup()` → `bag_gpkg_backup()`, and the three coordinate helpers
-      (`fpr_sp_assign_utm`, `fpr_sp_assign_sf_from_utm`, `fpr_sp_assign_latlong`) → `bag_*`
-- [ ] **Write tests for the three that have none** (only the UTM one has a test file)
-- [ ] Fix the inverted point-geometry guard present in **all four**:
-      `if (!attributes(sf::st_geometry(dat))$class[1] != "sfc_point")` is a double negation,
-      so the check never does what it reads as. Restore the defect and prove the fixed
-      guard fires
-- [ ] **Flag the consequence before porting:** `fpr_make_geopackage()` stays in `fpr` and
-      calls `fpr_sp_assign_sf_from_utm()`, so moving it makes `fpr` depend on `bag`. Either
-      `fpr` takes `bag` as an Import, or that one helper stays. This is the only item here
-      that changes another package's dependency graph
-- [ ] Add `readr` and `waldo` if the backup function's csv/RData paths are ported intact
+- [x] Ported `fpr_sp_gpkg_backup()` -> `bag_sp_gpkg_backup()` and the three coordinate
+      helpers -> `bag_sp_assign_utm()`, `bag_sp_assign_sf_from_utm()`,
+      `bag_sp_assign_latlong()`
+- [x] Tests for the three that had none, plus a round-trip property test: build points,
+      read their UTM columns, rebuild from those columns, land on the same ground. Either
+      function alone could be self-consistently wrong; together they cannot
+- [x] **The inverted guard, mechanism established rather than assumed.** In R `!` binds
+      *looser* than `!=` (`?Syntax`), so `!x != y` is `!(x != y)` — i.e. `x == y` — not
+      `(!x) != y`, which would have errored. The guard therefore read "abort when the class
+      IS `sfc_point`", and sf sets `sfc_POINT`, so it was false for **every** input and
+      never fired, on a point layer or a polygon one. Removing the `!` would have aborted on
+      every valid point layer instead, the opposite failure. Replaced with `inherits()`,
+      factored into one internal `bag_chk_sf_point()`, and restoring the donor's version
+      turns 5 tests red
+- [x] **The dependency consequence the plan predicted, plus one it did not.** Predicted:
+      `fpr_make_geopackage()` stays in `fpr` and calls the UTM helper, so `fpr` takes `bag`
+      as an Import. Unpredicted: `fpr_sp_gpkg_backup()` calls `fpr_tidy_assign_site_id()`
+      when `update_site_id = TRUE`, which is live at two call sites — and that function is
+      about site identity, pulls in `fpr_chk_dupes()`, and is called directly by five
+      reporting repos, so it belongs in `fpr`. **Gate decision (user, 2026-10-31):** inject
+      it. `bag_sp_gpkg_backup()` takes `fn_site_id = NULL`; `fpr`'s forwarder passes its own
+      function, so all ~20 call sites keep working and neither package imports the other
+- [x] `readr` added for the csv backup. `waldo` not needed — it appears only in the donor's
+      commented-out example
+- [x] **`magrittr` added, deliberately.** The donors' pipelines use the `.` placeholder
+      inside `dplyr::mutate()`, which the native pipe has no equivalent for, and their row
+      ordering and CRS round trip are relied on by files ~20 call sites write back. The gate
+      asked for a minimal-change port; rewriting the pipelines is where a regression would
+      come from. `magrittr` has no dependencies of its own. This is a stated deviation from
+      the `|>` convention, confined to the four ported functions
+- [x] **One guard of mine removed after a mutation test.** A missing-coordinate-column
+      check in `bag_sp_assign_sf_from_utm()` turned out to duplicate tibble's own reporting,
+      which already names every missing column; no mutation could distinguish them, so it
+      went rather than stay as untestable defensive code
 
 ## Phase 7 — Verify and release
 

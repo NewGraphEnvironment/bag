@@ -95,4 +95,30 @@
   sat months from the boundary, where an 8-hour shift is invisible. It now sits at 04:00 UTC
   on the boundary day, inside the offset, and runs under `TZ=America/Vancouver`
 - `devtools::test()`: FAIL 0 | WARN 0 | SKIP 2 | PASS 218, up from 148. Eleven exports
-- Next: Phase 6 (fpr's four). Phase 1 still with the user, and 4b, 7 and 8 wait on it
+- Phase 6 complete: fpr's four ported. 15 exports now -- the 4 keepers, 7 from the internal
+  package, 4 from fpr
+- The inverted geometry guard, mechanism established rather than assumed. In R `!` binds
+  *looser* than `!=`, so `!x != y` is `!(x != y)`, i.e. `x == y` -- not `(!x) != y`, which
+  would have errored on a character. The guard read "abort when the class IS `sfc_point`"
+  and sf sets `sfc_POINT`, so it was false for every input and **never fired, on a point
+  layer or a polygon one**. Removing the `!` would have aborted on every valid point layer:
+  the opposite failure. Settled by probing `!x != y` with `x = y = "a"`, which returns TRUE
+  rather than erroring, and by `?Syntax`. Factored into one `bag_chk_sf_point()`
+- A second dependency consequence, which the plan had not predicted:
+  `fpr_sp_gpkg_backup()` calls `fpr_tidy_assign_site_id()` when `update_site_id = TRUE`,
+  live at two call sites. That function is about site identity, pulls in another fpr
+  function, and five reporting repos call it directly, so it belongs in fpr. Taken to the
+  user as a boundary decision; answer was to inject it as `fn_site_id`, so neither package
+  imports the other and all ~20 call sites keep working
+- `magrittr` added deliberately, confined to the four ported functions: their pipelines use
+  the `.` placeholder inside `mutate()`, which `|>` has no equivalent for, and their row
+  order and CRS round trip are what ~20 callers write back to disk. The gate asked for a
+  minimal-change port, so the import is the lower-risk choice over a rewrite
+- Four mutation checks red: the guard (5 tests), the RData directory creation (2), the
+  callback result check (1). A fifth stayed **green with the substitution verified** -- a
+  missing-column guard I had added duplicated tibble's own reporting, which already names
+  every missing column. No mutation could distinguish them, so the guard was removed rather
+  than left as untestable defensive code
+- `devtools::test()`: FAIL 0 | WARN 0 | SKIP 2 | PASS 308, up from 218
+- Next: everything remaining is blocked on Phase 1, which is with the user. 4b needs the new
+  URL; 7 needs 4b; 8 needs the merge

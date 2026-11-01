@@ -12,6 +12,10 @@ reference:
   contents:
   - has_concept("metadata")
 - title: Files
-  desc: Read, convert and inspect spatial files.
+  desc: Read, convert, inspect and back up spatial files.
   contents:
   - has_concept("files")
+- title: Coordinates
+  desc: Move between geometry and UTM or latitude/longitude columns.
+  contents:
+  - has_concept("coordinates")
