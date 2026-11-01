@@ -30,14 +30,14 @@ zero", "A verification command can be shadowed by a shell function or alias".
 
 Conventions, in full:
 
-- `~/Projects/repo/soul/conventions/readme.md`
-- `~/Projects/repo/soul/conventions/writing.md`
-- `~/Projects/repo/soul/conventions/pkgdown-publishing.md`
-- `~/Projects/repo/soul/conventions/feature-workflow.md`, "Public-repo text describes the
+- soul's `conventions/readme.md`
+- soul's `conventions/writing.md`
+- soul's `conventions/pkgdown-publishing.md`
+- soul's `conventions/feature-workflow.md`, "Public-repo text describes the
   package, and points nowhere private" and "The version lives in one place"
 
 Also read, because the diff's claims point at them:
-`~/Projects/repo/soul/skills/citation-cff/SKILL.md` and
+soul's `skills/citation-cff/SKILL.md` and
 `NewGraphEnvironment/flows/.github/workflows/r-citation-cff.yaml@v1`.
 
 ## Findings
@@ -445,9 +445,10 @@ both right ✓. Nothing in the org's checkouts calls the ten deleted names (one 
 `library()` call) ✓.
 
 **The nine donor defects were filed**, each verified present in the donor first:
-`rfp#415`, `#416`, `#417`, `#418` and `fpr#139`, `#140`. The three the NEWS entry
-describes map onto `fpr#139` (`!x != y`), `rfp#417` (the timezone drift) and `rfp#416` (the
-layer remover's data-loss path) ✓.
+four with the internal package and [fpr#139](https://github.com/NewGraphEnvironment/fpr/issues/139),
+[fpr#140](https://github.com/NewGraphEnvironment/fpr/issues/140). The three the NEWS entry
+describes map onto fpr#139 (`!x != y`), the internal package's timezone drift and its
+layer remover's data-loss path ✓.
 
 **`spacehakr@v0.4.2` stays installable:** `gh api repos/NewGraphEnvironment/spacehakr`
 answers `NewGraphEnvironment/bag`, and `v0.4.2` is on the remote ✓.

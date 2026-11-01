@@ -315,24 +315,42 @@ Reprefix only, per the gate: the donor stems are kept and only the prefix change
 
 ## Phase 8 — Protect, then switch, the consumers (separate PRs)
 
-- [ ] **Before this branch merges:** pin the one consumer that declares the dependency to
-      `@v0.4.2`. Merging `Package: bag` to the default branch otherwise makes it
-      uninstallable — its `Remotes:` follows the GitHub redirect and installs a package
+- [x] **Before this branch merges:** pin **both** consumers that declare the dependency to
+      `@v0.4.2`. Merging `Package: bag` to the default branch otherwise makes them
+      uninstallable — a `Remotes:` entry follows the GitHub redirect and installs a package
       named `bag`, leaving `Imports: spacehakr` unsatisfiable, and nine reporting repos
-      install it
+      install one of them. **The plan said one consumer and that was wrong** — see
+      `findings.md`, "Correction: ngr forwards to this package". Pinning the one turned the
+      other's CI red with `dependency conflict`, which is how the error surfaced. Landed as
+      two one-line PRs, the public half being
+      [ngr PR #48](https://github.com/NewGraphEnvironment/ngr/pull/48), both merged before
+      this branch
 - [ ] Switch the public caller: one `spacehakr::spk_source_url()` call site in a
-      water-quality sourcing script
-- [ ] Switch the repo that declares the dependency: `Imports:` and `Remotes:` to `bag`
-      together, a live catalogue-driven fetch path, and three deprecating shims
+      water-quality sourcing script. Owed by that repo, not this one, and tracked there as
+      [restoration_wedzin_kwa_2024#165](https://github.com/NewGraphEnvironment/restoration_wedzin_kwa_2024/issues/165).
+      Measured on the way to filing: the call is on an unmerged branch, every argument it
+      passes keeps its name in `bag_url()`, and the repo has no `DESCRIPTION`, so there is
+      nothing to pin there
+- [ ] Switch the repos that declare the dependency: `Imports:` and `Remotes:` to `bag`
+      together, a live catalogue-driven fetch path, and three deprecating shims. Owed by
+      each consumer. The public half is
+      [ngr#47](https://github.com/NewGraphEnvironment/ngr/issues/47), which retires the
+      twelve forwarders; the other is tracked by its own counterpart issue
 - [ ] **Grep each repo for the bare package name, not just `::`.** Four things there break
       on the name and no `spacehakr::` grep finds them: a WFS canary asserting on
       `packageVersion()`, a test that greps its own function bodies and checks each target
       against `getNamespaceExports()` — which after the rename **skips silently** rather
       than failing, because it is gated on the package being installed — three
       `mockery::stub()` targets, and a runnable vignette example. The other internal repo
-      names the package in a host-provisioning install check
-- [ ] Land the deprecating forwarders in both donor repos. The internal package's half is
-      tracked by its own counterpart issue; `fpr` needs a new issue for its four
+      names the package in a host-provisioning install check. Owed by each consumer, and no
+      longer only recorded here: the per-file measurement is now in the counterpart issue
+      of the consumer it describes, with the quiet-direction warning stated, because that is
+      the issue whoever does the switch will read
+- [x] Land the deprecating forwarders in both donor repos — **filed, not landed**: owed by
+      the donors, and both halves are now tracked where the work happens.
+      [fpr#141](https://github.com/NewGraphEnvironment/fpr/issues/141) carries fpr's four
+      with the name mapping; the internal package's half is tracked by its own counterpart
+      issue
 
 ## Phase 9 — Final naming pass (supersedes the names used in Phases 2, 5 and 6)
 
@@ -492,12 +510,22 @@ does half the work, and is immune to the data-masking trap a bare variable insid
       `dir_backup` branch. Correction made while verifying: the guard is in **three** fpr
       helpers, not four — `fpr_sp_assign_sf_from_utm()` takes a plain data frame and
       correctly has none
-- [ ] Report to the umbrella issue that its ODM conditional is settled — drone jobs do
+- [x] Report to the umbrella issue that its ODM conditional is settled — drone jobs do
       still run — and that three public repos depend on `ngr`'s copies of the helpers this
-      branch deletes, which its ngr-retirement row has to cover
-- [ ] Update the internal ecosystem registry's row and tagline for this repo, which still
-      describes the deleted functions
-- [ ] Unpin the consumer once its switch PR has landed
+      branch deletes, which its ngr-retirement row has to cover. Reported as a body edit,
+      not a comment: all three are findings that change what someone would build. The
+      forwarder count was corrected from thirteen to twelve at the same time, and the
+      ngr-retirement row now cites
+      [ngr#47](https://github.com/NewGraphEnvironment/ngr/issues/47) and names its three
+      public callers
+- [x] Update the internal ecosystem registry's row and tagline for this repo, which still
+      describes the deleted functions. Done by a parallel session on 2026-11-01, measured
+      rather than recalled: the entry, its tagline and the rendered table all follow the
+      new name, and the registry check reports 0 problems
+- [ ] Unpin **both** consumers once each switch PR has landed — pin everywhere or nowhere,
+      so neither comes off alone. Owed after
+      [ngr#47](https://github.com/NewGraphEnvironment/ngr/issues/47) and the other
+      consumer's counterpart issue
 
 ## Validation
 
@@ -510,7 +538,8 @@ does half the work, and is immune to the data-masking trap a bare variable insid
       through, and the sibling over the same container keeps the behaviour*) and the
       mechanical enumeration that ends it. Two of the 19 were data loss, one of them a
       regression introduced by Phase 11's rewrite
-- [ ] PWF checkboxes match landed work
+- [x] PWF checkboxes match landed work. Every box left unticked is owed by another repo and
+      names the issue tracking it there
 - [ ] `/planning-archive` on completion
 
 ## The merge sequence, decided 2026-11-01
@@ -531,11 +560,9 @@ this order from each repo's checkout.
    and `rfp` resolves `ngr` from its default branch. Merging while red would merge a PR
    whose CI never proved the fix, and that run is the independent confirmation of the
    local `pak::lockfile_create("deps::.")` test.
-3. **`/gh-pr-merge 419 no-release`** in `rfp`.
-   [rfp PR #419](https://github.com/NewGraphEnvironment/rfp/pull/419) pins the same tag.
-   `no-release` is not a judgment call here: `main` carries three unreleased commits since
-   `v0.93.0`, including [rfp PR #413](https://github.com/NewGraphEnvironment/rfp/pull/413),
-   which moved the R workflows to the shared `flows` repo. A release would cut `v0.93.1`
+3. **`/gh-pr-merge <N> no-release`** in the other consumer, whose PR pins the same tag.
+   `no-release` is not a judgment call here: its `main` carries three unreleased commits
+   since its last release, one of which moved the R workflows to the shared `flows` repo. A release would cut `v0.93.1`
    with NEWS describing someone else's work — the case `no-release` is documented for.
 4. **`/gh-pr-merge 35`** in `bag`, with full release bookkeeping.
    The skill detects the bump already landed on the branch (`SKIP_BUMP=1`), so it does
@@ -560,10 +587,10 @@ can be uploaded by hand to the same concept record. The concept DOI does not cha
 
 - **The merge is the owner's**, so the tag, the GitHub release and the post-merge CI
   watch are `/gh-pr-merge`'s, not this branch's
-- **[rfp PR #419](https://github.com/NewGraphEnvironment/rfp/pull/419) must merge first.**
-  It pins the one consumer to `@v0.4.2`; without it, merging this makes that repo
+- **The other consumer's pinning PR must merge first.**
+  It pins that consumer to `@v0.4.2`; without it, merging this makes that repo
   uninstallable and nine reporting repos install it
-- **`sred#26`'s title still says `spacehakr`**, so `rnd_issue.sh` returns `NONE` for this
+- **The R&D tracking issue's title still says `spacehakr`**, so `rnd_issue.sh` returns `NONE` for this
   repo and every future PR here will miss the R&D line. The line was written into
   [PR #35](https://github.com/NewGraphEnvironment/bag/pull/35) by hand on the strength of
   PR #30's precedent. Retitling is the owner's call — `feature-workflow.md` reserves it,

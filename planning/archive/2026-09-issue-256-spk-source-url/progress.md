@@ -1,4 +1,4 @@
-# Progress — spk_source_url() fixes (rfp#256)
+# Progress — spk_source_url() fixes
 
 ## Session 2026-09-02
 

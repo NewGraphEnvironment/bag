@@ -1,4 +1,4 @@
-# Task: spk_source_url() — fail loudly, coordinate CSVs, non-UTF-8 sources (rfp#256)
+# Task: spk_source_url() — fail loudly, coordinate CSVs, non-UTF-8 sources
 
 
 ## Context
@@ -13,7 +13,8 @@ function is for, and it cannot ingest them today: they are UTF-16LE, carry Latit
 Longitude columns rather than geometry, and the layer name embeds a date range that
 moves when the publisher rolls the file.
 
-Tracked in rfp#256. Project context stays there; the work below stands on its own.
+Tracked by an issue in the internal package that asked for it. Project context stays
+there; the work below stands on its own.
 
 Five defects, all in `R/spk_source_url.R`:
 

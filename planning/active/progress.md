@@ -377,9 +377,8 @@
   exactly four files landed here carrying `%>%`, all from the fpr intake. Reworded to
   "four of the eleven" so it cannot be misread
 - Commits: `a8f74eb` (identity + release), `d7b6e80` (round 4 corrections)
-- Open at the merge: [rfp PR #419](https://github.com/NewGraphEnvironment/rfp/pull/419)
-  pins the one consumer and **must merge first**; `sred#26`'s title still says
-  `spacehakr`, so `rnd_issue.sh` returns `NONE` here; the tag, the release and the
+- Open at the merge: the other consumer's pinning PR **must merge first**; the R&D
+  tracking issue's title still says `spacehakr`, so `rnd_issue.sh` returns `NONE` here; the tag, the release and the
   post-merge CI watch are `/gh-pr-merge`'s
 
 ## Session 2026-11-01 (UTC) — a planning measurement was false, and the pin rule caught it
@@ -410,8 +409,8 @@
   candidate rather than a restore
 - **Both consumers pinned**, which `pak::lockfile_create("deps::.")` — the call rfp's CI
   runs — now solves, tested before either PR merges:
-  [ngr PR #48](https://github.com/NewGraphEnvironment/ngr/pull/48) and
-  [rfp PR #419](https://github.com/NewGraphEnvironment/rfp/pull/419)
+  [ngr PR #48](https://github.com/NewGraphEnvironment/ngr/pull/48) and the other
+  consumer's
 - **The real fix is [ngr#47](https://github.com/NewGraphEnvironment/ngr/issues/47)**,
   filed with the census: re-point two, rehome or restore four, delete six
 - **The local `ngr` checkout was ten commits stale.** Every finding above used
@@ -419,4 +418,32 @@
   all and confirmed the plan's error
 - `CLAUDE.md` now carries the enumeration command for finding every consumer that
   declares the entry, because "pin everywhere" is only as good as the list
-- Merge order is now three deep: ngr#48, then rfp#419, then the rename
+- Merge order is now three deep: ngr PR #48, then the other consumer's, then the rename
+
+## Session 2026-11-01 (closing out)
+
+- **Finished the plan's owed items**, after measuring each rather than working the list:
+  two of the five were already done — the internal ecosystem registry row by a parallel
+  session, and `fpr`'s forwarders issue
+  ([fpr#141](https://github.com/NewGraphEnvironment/fpr/issues/141)) earlier in this run
+- **The umbrella issue was reported to as a body edit, not a comment**: its ODM conditional
+  is settled (drone jobs do still run — three live call sites), its forwarder count was
+  thirteen and is twelve, its row for this repo now says shipped and how Rule 3 was met by
+  the rename rather than a forwarders release, and its ngr-retirement row now cites
+  [ngr#47](https://github.com/NewGraphEnvironment/ngr/issues/47) and names the three public
+  callers it has to carry
+- **The public caller is now tracked where it lives**:
+  [restoration_wedzin_kwa_2024#165](https://github.com/NewGraphEnvironment/restoration_wedzin_kwa_2024/issues/165).
+  Measured while filing: the call is on an unmerged branch, every argument keeps its name
+  in `bag_url()`, and that repo has no `DESCRIPTION`, so nothing there needs pinning
+- **The four bare-name breakages went into the consumer's own issue.** They had been
+  recorded only here, in a public repo that cannot name the files; whoever does the switch
+  reads that issue, not this plan. Includes the quiet-direction warning: its deprecation
+  test is gated on `skip_if_not_installed()`, so it **skips** rather than fails
+- **`findings.md` carried the disproved `ngr` measurement as fact.** Corrected: the wrong
+  paragraph stays, with a pointer, and the measurement that overturned it is at the end of
+  the file with what it cost
+- **Fifteen barred private-repo references were found in this repo's own `planning/`** and
+  scrubbed — see `findings.md`, "The scrub covered the tree and the PR body". Four of them
+  had been public since September
+- Next: `/planning-archive`

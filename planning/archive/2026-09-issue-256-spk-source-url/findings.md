@@ -1,4 +1,4 @@
-# Findings — spk_source_url() fixes (rfp#256)
+# Findings — spk_source_url() fixes
 
 ## Starting point
 

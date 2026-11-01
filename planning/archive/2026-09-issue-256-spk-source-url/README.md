@@ -1,4 +1,4 @@
-# spk_source_url(): fail loudly, coordinate CSVs, non-UTF-8 sources (rfp#256)
+# spk_source_url(): fail loudly, coordinate CSVs, non-UTF-8 sources
 
 ## Outcome
 

@@ -93,6 +93,12 @@ implementations, not shims** — `ngr/DESCRIPTION` contains no `spacehakr` line 
 or `Remotes`, and the bodies carry no `spacehakr::` call. So deleting spacehakr's copies
 strands nobody.
 
+> **Every sentence in the paragraph above is false.** It was the most expensive error in
+> this run. The measured truth is at the end of this file, under "Correction: ngr forwards
+> to this package". The paragraph is left standing because the pin it made look
+> unnecessary, and the red CI that followed, are only legible beside the claim that caused
+> them.
+
 Three public repos call ngr's copies in live code:
 
 | repo | functions |
@@ -268,3 +274,71 @@ return 404 on the live site, and the shared workflow gates root pages with
 | CRAN name check reported `bag` free *and* found no package starting `ba`, with 25,636 links on the page | The probe was broken, not the world: names are wrapped in `<span class="CRAN">`, not bare in the anchor. Re-extracted; controls `sf` and `terra` then both resolved |
 | `curl -o /dev/null -w %{http_code}` on `cran.r-project.org/package=<name>` returned 303 for every name, including `sf` | A redirect, so the status carries no information. Used the name index instead |
 | Zenodo's search API returned `hits: 0` for the concept DOI | Query shape, not a missing record. `curl -L` on `doi.org/10.5281/zenodo.23524742` resolves to a live record titled for spacehakr |
+
+## Correction: ngr forwards to this package
+
+Measured against `ngr origin/main` on 2026-11-01, after a pin in one consumer turned the
+*other* consumer's CI red with `dependency conflict`:
+
+| the claim above | measured |
+|---|---|
+| `ngr/DESCRIPTION` has no `spacehakr` line | `spacehakr` is in `Imports:` (line 40) and `NewGraphEnvironment/spacehakr@v0.4.2` is in `Remotes:` (line 47) |
+| the bodies carry no `spacehakr::` call | twelve files under `R/` call `spacehakr::`; each `ngr_spk_*` is a one-line forwarder that warns once and calls `spacehakr::spk_*(...)` |
+| independent implementations, not shims | shims, all twelve |
+| deleting this package's copies strands nobody | it strands every caller of all twelve `ngr_spk_*`, which is three public repos |
+
+So the umbrella issue's "13 of its functions are already shims into spacehakr" was right
+about the mechanism and off by one on the count. The paragraph above recorded that claim as
+*not reproducible from the checkout* — and it was not reproducible **from this machine's
+checkout**, which was ten commits stale and genuinely carried no `spacehakr` line. Grepping
+it instead of `origin/main` would have confirmed the error rather than caught it.
+
+**What made it surface:** pinning one consumer to `@v0.4.2` turned the other consumer's CI
+red, because `Remotes:` pins are declared per repo and resolved globally — the exact
+failure `CLAUDE.md`'s "Pin this package in every consumer, or in none" describes, and the
+reason that rule says *everywhere* means every consumer that declares the entry, not every
+consumer you remember.
+
+**What it cost:** one extra one-line PR ([ngr PR #48](https://github.com/NewGraphEnvironment/ngr/pull/48)),
+a re-run of the first consumer's CI, and corrections to `NEWS.md` and `CLAUDE.md`, both of
+which had already repeated the false claim in text that ships.
+
+**The near miss:** the repo's *original* `CLAUDE.md` stated the dependency correctly. The
+planning session's "correction" of it was the error, and it survived four review rounds
+because every round read the plan rather than `ngr origin/main`.
+
+## The scrub covered the tree and the PR body; it missed this repo's own `planning/`
+
+Found 2026-11-01, **after** the merge, while closing out the plan's owed items. The
+public-repo rule bars links to private repos and the `owner/private-repo#N` form "not even
+as provenance", and `feature-workflow.md` says in as many words that "a scrub covers the
+surfaces you were editing; re-grep the others before merging". The surfaces being edited
+were `R/`, `NEWS.md`, `README`, `CLAUDE.md` and the PR body. `planning/` was being
+*written*, not scrubbed, so nobody re-grepped it.
+
+Fifteen barred references, in six files, enumerated rather than recalled — the private repo
+list from `gh repo list --visibility private` (72 repos), then one `git grep -E` for
+`github.com/NewGraphEnvironment/(<them>)` and `(<them>)#[0-9]+`:
+
+| file | what |
+|---|---|
+| `planning/active/task_plan.md` | three links to a private consumer's PRs, one reference to the R&D tracking issue by `repo#N` |
+| `planning/active/progress.md` | two of the same links, two `repo#N` forms |
+| `planning/active/review-round4-identity.md` | six `repo#N` forms for donor-defect issues, five local machine paths (`~/Projects/repo/soul/...`) |
+| `planning/archive/2026-09-issue-256-spk-source-url/` (4 files) | `rfp#256` in each title, and in one body |
+
+All fifteen are now words instead: "the other consumer's pinning PR", "the R&D tracking
+issue", "four with the internal package". The two public donor issues keep their links,
+because `fpr` is public. The machine paths read `soul's conventions/<file>.md`, the register
+the synced appendix itself uses.
+
+**Two things this does not fix.** The references are in this repo's git history, which is
+public and is not being rewritten for a private repo *name*; and the archive's four files
+had carried `rfp#256` in their titles since September, so the exposure is seven weeks old,
+not one day. What a reader could learn from them is that a private repo exists under a given
+name and that an issue of some number in it concerns this work — no titles, no bodies.
+
+**Why the gate did not catch it.** The barred form is mechanically greppable, and nothing
+greps for it: `/gh-pr-merge` step 3b scans *issue bodies* for private references, and
+soul's `check_public_render.sh` covers the synced appendix. A public repo's own tracked
+files are checked by neither.
