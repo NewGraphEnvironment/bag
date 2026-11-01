@@ -51,12 +51,19 @@ bag_assign_utm <- function(dat = NULL,
   chk::chk_string(col_northing)
 
   # Flag the case where the named coordinate columns do not exist yet, since the caller may
-  # have meant to point at existing ones.
-  if (!col_easting %in% names(dat) || !col_northing %in% names(dat)) {
+  # have meant to point at existing ones. Only the absent ones are named: the predicate is
+  # an OR, so saying "both" sent a caller who typo'd one argument to check the other.
+  absent <- c(col_easting = col_easting, col_northing = col_northing)
+  absent <- absent[!absent %in% names(dat)]
+  if (length(absent) > 0) {
+    # Both the argument and the value it holds, and only the ones actually absent. cli
+    # resolves {?a/b} against the most recent quantity IN THE SAME STRING, and each
+    # bullet is its own string -- hence the explicit qty() on the last.
     cli::cli_warn(c(
-      "{.arg col_easting} and {.arg col_northing} are not columns of {.arg dat}.",
-      i = "Looking for {.field {col_easting}} and {.field {col_northing}}.",
-      i = "They will be created. Pass the existing names if that is not what you want."
+      "{.arg {names(absent)}} {?does/do} not name {?a column/columns} of {.arg dat}.",
+      i = "Looking for {.field {absent}}.",
+      i = "{cli::qty(length(absent))}{?It/They} will be created. Pass the existing
+            name{?s} if that is not what you want."
     ))
   }
 
@@ -81,6 +88,24 @@ bag_assign_utm <- function(dat = NULL,
 
   epsg <- 26900 + dat2[[col_zone]]
 
+  # Rows the zone arithmetic could not place -- an empty POINT, or NA coordinates, which
+  # is a field row entered without a GPS fix. They keep every attribute and get NA
+  # coordinate columns, which is what the sibling bag_assign_latlong() does. The
+  # st_transform() is a no-op that puts the columns through the same tail as a real zone
+  # group, so the two cannot come out in different orders.
+  add_na_coords <- function(grp) {
+    # The zone is set too, not left as the NaN the arithmetic produced: NaN is an NA in
+    # R, but it prints differently and would read as a computed value rather than a
+    # missing one.
+    grp |>
+      dplyr::mutate(
+        {{ col_zone }} := NA_real_,
+        {{ col_easting }} := NA_real_,
+        {{ col_northing }} := NA_real_
+      ) |>
+      sf::st_transform(crs = crs_og)
+  }
+
   read_coords <- function(grp, epsg_zone) {
     grp_utm <- sf::st_transform(grp, crs = epsg_zone)
     xy <- sf::st_coordinates(grp_utm)
@@ -93,23 +118,42 @@ bag_assign_utm <- function(dat = NULL,
       sf::st_transform(crs = crs_og)
   }
 
-  zones <- unique(sort(epsg))
+  # `placed` is what keeps an unplaceable row out of the subscript below. Without it
+  # sort() drops the NA from `zones`, so the row joins no group -- and `epsg == epsg_zone`
+  # is NA for it in EVERY pass, which `[.data.frame` answers with a fabricated all-NA row.
+  # One such input row became `length(zones)` phantom rows and its own attributes were
+  # lost, silently, on a frame bag_gpkg_refresh() then wrote back over the GeoPackage.
+  placed <- !is.na(epsg)
+  zones <- unique(sort(epsg[placed]))
 
   # One pass per zone, keyed on the sorted zone values themselves. The donor paired a
   # group_split() with a separately derived CRS vector and relied on the two coming out in
   # the same order -- an invariant held together by a comment, which needed an
   # arrange(epsg) above to hold. Here each pass carries the CRS it transforms to, and the
   # sorted keys are what put the rows back in zone order, so neither is needed.
-  #
-  # No rows means no zones, and binding no groups gives a 0 x 0 tibble that loses every
+  groups <- purrr::map(
+    zones,
+    function(epsg_zone) read_coords(dat2[placed & epsg == epsg_zone, ], epsg_zone)
+  )
+
+  n_unplaced <- sum(!placed)
+  if (n_unplaced > 0) {
+    cli::cli_warn(c(
+      "{n_unplaced} row{?s} of {.arg dat} ha{?s/ve} no usable coordinates.",
+      i = "{cli::qty(n_unplaced)}{?Its/Their} {.field {col_zone}}, {.field {col_easting}}
+            and {.field {col_northing}} are NA; every other column is kept.",
+      i = "An empty geometry, or an NA coordinate, does this."
+    ))
+    groups <- c(groups, list(add_na_coords(dat2[!placed, ])))
+  }
+
+  # No rows at all means no groups, and binding none gives a 0 x 0 tibble that loses every
   # column the caller passed in. One pass over the empty frame produces the same columns
   # instead, and it goes through the same bind_rows() so the column ORDER cannot diverge
-  # between the two paths -- that bind is what moves geometry last. The zone is a
-  # placeholder with no rows to place: 26909 is the westernmost of the three BC zones.
-  groups <- if (length(zones) == 0) {
-    list(read_coords(dat2, 26909))
-  } else {
-    purrr::map(zones, function(epsg_zone) read_coords(dat2[epsg == epsg_zone, ], epsg_zone))
+  # between the paths -- that bind is what moves geometry last. The zone is a placeholder
+  # with no rows to place: 26909 is the westernmost of the three BC zones.
+  if (length(groups) == 0) {
+    groups <- list(read_coords(dat2, 26909))
   }
 
   dplyr::bind_rows(groups)

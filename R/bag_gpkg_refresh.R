@@ -11,9 +11,10 @@
 #' Both backups exist on purpose. The `.csv` is the versionable one; the `.RData` holds the
 #' object exactly, because rebuilding it from the csv introduces small differences.
 #'
-#' @param path_gpkg [character] Path to a GeoPackage holding exactly one point layer. A
-#'   GeoPackage with more than one layer is refused, because the write-back replaces the
-#'   whole file.
+#' @param path_gpkg [character] Path to a GeoPackage holding exactly one point layer.
+#'   More than one *spatial* layer is refused, since which to refresh would be decided by
+#'   layer order. Support tables carrying no geometry — QGIS's `layer_styles`, for one —
+#'   are not counted, and survive the write-back.
 #' @param dir_backup [character] Directory for the backups. Created if absent.
 #' @param update_utm [logical] Refresh the UTM columns with [bag_assign_utm()]. Default
 #'   `TRUE`.
@@ -23,9 +24,9 @@
 #'   This is where the fish-passage package's site-id assignment is injected. That logic is
 #'   about site identity rather than about files, so it stays in that package and is passed
 #'   in rather than imported — neither package depends on the other.
-#' @param write_back_to_path [logical] Overwrite `path_gpkg` with the result, keeping the
-#'   layer's name. Default `FALSE`. The write deletes and recreates the file, so anything
-#'   else in it would be lost — which is why a multi-layer source is refused above.
+#' @param write_back_to_path [logical] Overwrite the layer in `path_gpkg` with the result,
+#'   keeping its name. Default `FALSE`. Only that layer is replaced, so a style saved into
+#'   the GeoPackage is left alone.
 #' @param write_to_csv [logical] Write a geometry-dropped `.csv` backup. Default `TRUE`.
 #' @param write_to_rdata [logical] Write an `.RData` backup holding the object under the
 #'   GeoPackage's base name. Default `TRUE`.
@@ -80,18 +81,28 @@ bag_gpkg_refresh <- function(path_gpkg = NULL,
   chk::chk_flag(return_object)
   if (!is.null(fn_site_id)) chk::chk_function(fn_site_id)
 
-  # The documented precondition, enforced. st_read() with no `layer` silently takes the
-  # first one, so without this a multi-layer GeoPackage would be read in part and -- with
-  # write_back_to_path -- written back as a single layer, destroying the rest.
+  # The documented precondition, enforced: st_read() with no `layer` silently takes the
+  # first one, so a multi-layer GeoPackage would otherwise be read in part with nothing
+  # said. Counted over SPATIAL layers only -- `st_layers()` also lists support tables
+  # such as QGIS's `layer_styles`, and a styled Mergin field form is the documented use
+  # case, so counting those refused the very files this function is for. The
+  # discriminator is the property itself: a support table has no geometry type.
   layers <- sf::st_layers(path_gpkg)
-  if (length(layers$name) != 1L) {
+  has_geom <- vapply(
+    layers$geomtype,
+    function(g) length(g) > 0 && !all(is.na(g)),
+    logical(1)
+  )
+  spatial <- layers$name[has_geom]
+
+  if (length(spatial) != 1L) {
     cli::cli_abort(c(
-      "{.arg path_gpkg} must hold exactly one layer.",
-      x = "{.path {path_gpkg}} holds {length(layers$name)}: {.val {layers$name}}.",
-      i = "Writing back replaces the whole GeoPackage, so the others would be lost."
+      "{.arg path_gpkg} must hold exactly one spatial layer.",
+      x = "{.path {path_gpkg}} holds {length(spatial)}: {.val {spatial}}.",
+      i = "Which one to refresh would otherwise be decided by layer order."
     ))
   }
-  layer_name <- layers$name[[1]]
+  layer_name <- spatial
 
   dat <- sf::st_read(dsn = path_gpkg, layer = layer_name, quiet = TRUE)
 
@@ -108,14 +119,21 @@ bag_gpkg_refresh <- function(path_gpkg = NULL,
   }
 
   if (write_back_to_path) {
-    # `layer` is passed explicitly: st_write() otherwise names the layer after the file's
+    # Two departures from the donor, which wrote `delete_dsn = TRUE` and no `layer`.
+    #
+    # `layer` is explicit because st_write() otherwise names the layer after the file's
     # base name, so a layer called `sites` in `form_fiss_site_2026.gpkg` came back called
-    # `form_fiss_site_2026` and every QGIS project, Mergin form and script naming it broke.
-    # The donor had the same defect and wrote without `quiet = TRUE`, so a user at least
-    # saw "Writing layer '<basename>'".
+    # `form_fiss_site_2026`, breaking every QGIS project, Mergin form and script naming
+    # it. The donor at least wrote without `quiet = TRUE`, so a user saw the rename.
+    #
+    # `delete_layer` replaces that one layer; `delete_dsn` deleted the whole GeoPackage
+    # and rebuilt it, which destroyed everything else in the file -- a saved QGIS style
+    # in `layer_styles`, and `gpkg_metadata`, which no count of layers can even see.
+    # Measured: with `delete_layer` the style table and its rows survive, and a changed
+    # column set still lands.
     sf::st_write(
       dat, path_gpkg,
-      layer = layer_name, append = FALSE, delete_dsn = TRUE, quiet = TRUE
+      layer = layer_name, append = FALSE, delete_layer = TRUE, quiet = TRUE
     )
   }
 
@@ -133,10 +151,18 @@ bag_gpkg_refresh <- function(path_gpkg = NULL,
     fs::dir_create(dir_backup)
 
     # The object is renamed so the .RData carries an informative name rather than "dat".
+    # It is bound in a scratch environment, not this function's own frame: a GeoPackage
+    # called `dat.gpkg` otherwise rebound -- and then rm()'d -- the working object, so the
+    # call died at `return(dat)`, and `obj_name.gpkg` handed save() an sf object where it
+    # wanted a name. Both aborted after write_back_to_path had already rewritten the file.
     obj_name <- tools::file_path_sans_ext(basename(path_gpkg))
-    assign(obj_name, dat, envir = environment())
-    save(list = obj_name, file = fs::path(dir_backup, obj_name, ext = "RData"))
-    rm(list = obj_name, envir = environment())
+    env_save <- new.env(parent = emptyenv())
+    assign(obj_name, dat, envir = env_save)
+    save(
+      list = obj_name,
+      envir = env_save,
+      file = fs::path(dir_backup, obj_name, ext = "RData")
+    )
   }
 
   if (return_object) {

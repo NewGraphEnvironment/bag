@@ -17,9 +17,10 @@ bag_gpkg_refresh(
 )
 }
 \arguments{
-\item{path_gpkg}{\link{character} Path to a GeoPackage holding exactly one point layer. A
-GeoPackage with more than one layer is refused, because the write-back replaces the
-whole file.}
+\item{path_gpkg}{\link{character} Path to a GeoPackage holding exactly one point layer.
+More than one \emph{spatial} layer is refused, since which to refresh would be decided by
+layer order. Support tables carrying no geometry — QGIS's \code{layer_styles}, for one —
+are not counted, and survive the write-back.}
 
 \item{dir_backup}{\link{character} Directory for the backups. Created if absent.}
 
@@ -33,9 +34,9 @@ This is where the fish-passage package's site-id assignment is injected. That lo
 about site identity rather than about files, so it stays in that package and is passed
 in rather than imported — neither package depends on the other.}
 
-\item{write_back_to_path}{\link{logical} Overwrite \code{path_gpkg} with the result, keeping the
-layer's name. Default \code{FALSE}. The write deletes and recreates the file, so anything
-else in it would be lost — which is why a multi-layer source is refused above.}
+\item{write_back_to_path}{\link{logical} Overwrite the layer in \code{path_gpkg} with the result,
+keeping its name. Default \code{FALSE}. Only that layer is replaced, so a style saved into
+the GeoPackage is left alone.}
 
 \item{write_to_csv}{\link{logical} Write a geometry-dropped \code{.csv} backup. Default \code{TRUE}.}
 

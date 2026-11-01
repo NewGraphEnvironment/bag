@@ -74,8 +74,24 @@ bag_bcdc_index <- function(pkg_exclude = c("bc-web-map-library")) {
     dplyr::mutate(object_name = stringr::str_to_lower(object_name))
 
   # The package id and notes, so each object name can be joined to its catalogue record.
+  #
+  # NA rather than the NULL pluck() returns for a missing element, for the reason
+  # .bag_bcdc_schtab() carries at length: list() drops a NULL entry, bind_rows() NA-fills
+  # the gap wherever some other package supplied the field, and so the hole never shows
+  # -- until EVERY package lacks it, when the column is absent altogether and the code
+  # downstream fails naming a column the caller never passed.
+  pluck_chr <- function(x, key) {
+    v <- purrr::pluck(x, key)
+    if (is.null(v)) NA_character_ else as.character(v)
+  }
+
   id_description <- l |>
-    purrr::map(~ list(id_package = purrr::pluck(.x, "id"), description = purrr::pluck(.x, "notes"))) |>
+    purrr::map(function(pkg) {
+      list(
+        id_package = pluck_chr(pkg, "id"),
+        description = pluck_chr(pkg, "notes")
+      )
+    }) |>
     dplyr::bind_rows(.id = "package_name")
 
   # Joined on the row index as well as the package name. `package_name` alone is not a key

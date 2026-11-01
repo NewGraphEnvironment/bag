@@ -240,7 +240,7 @@ testthat::test_that("bag_gpkg_refresh refuses a GeoPackage with more than one la
 
   testthat::expect_error(
     bag_gpkg_refresh(path_gpkg = path, write_to_csv = FALSE, write_to_rdata = FALSE),
-    "exactly one layer"
+    "exactly one spatial layer"
   )
 
   # and nothing was written on the way to the abort
@@ -292,4 +292,76 @@ testthat::test_that("bag_gpkg_refresh handles a point layer with no features", {
   testthat::expect_s3_class(out, "sf")
   testthat::expect_equal(nrow(out), 0L)
   testthat::expect_true(all(c("easting", "northing", "utm_zone") %in% names(out)))
+})
+
+testthat::test_that("bag_gpkg_refresh handles a GeoPackage named after one of its own locals", {
+  testthat::skip_if_not_installed("sf")
+
+  # The .RData block assign()ed into the function's own frame, so `dat.gpkg` rebound and
+  # then rm()'d the working object and the call died at return(dat), while
+  # `obj_name.gpkg` handed save() an sf object where it wanted a name. Both aborted after
+  # write_back_to_path had already rewritten the file.
+  src <- seed_point_gpkg()
+  on.exit(unlink(dirname(src), recursive = TRUE), add = TRUE)
+  d <- sf::st_read(src, quiet = TRUE)
+
+  for (nm in c("dat", "obj_name", "layer_name", "path_gpkg")) {
+    dir <- tempfile("collide_")
+    fs::dir_create(dir)
+    path <- fs::path(dir, paste0(nm, ".gpkg"))
+    sf::st_write(d, path, layer = nm, quiet = TRUE)
+
+    out <- suppressWarnings(bag_gpkg_refresh(
+      path_gpkg = path,
+      dir_backup = fs::path(dir, "backup"),
+      write_to_csv = FALSE,
+      write_to_rdata = TRUE,
+      return_object = TRUE
+    ))
+
+    testthat::expect_s3_class(out, "sf")
+    testthat::expect_true(fs::file_exists(fs::path(dir, "backup", paste0(nm, ".RData"))))
+    unlink(dir, recursive = TRUE)
+  }
+})
+
+testthat::test_that("bag_gpkg_refresh accepts a form carrying a QGIS style table", {
+  testthat::skip_if_not_installed("sf")
+  testthat::skip_if_not_installed("RSQLite")
+  testthat::skip_if_not_installed("DBI")
+
+  # st_layers() lists QGIS's `layer_styles` support table, so counting every layer
+  # refused a styled Mergin field form -- the documented use case -- by any argument
+  # combination. Support tables carry no geometry type, which is the discriminator.
+  path <- seed_point_gpkg()
+  on.exit(unlink(dirname(path), recursive = TRUE), add = TRUE)
+  con <- DBI::dbConnect(RSQLite::SQLite(), path)
+  DBI::dbExecute(
+    con,
+    "CREATE TABLE layer_styles (id INTEGER PRIMARY KEY, f_table_name TEXT, styleqml TEXT)"
+  )
+  DBI::dbExecute(
+    con,
+    "INSERT INTO layer_styles (f_table_name, styleqml) VALUES ('sites', '<qgis/>')"
+  )
+  DBI::dbDisconnect(con)
+  testthat::expect_length(sf::st_layers(path)$name, 2L)
+
+  out <- suppressWarnings(bag_gpkg_refresh(
+    path_gpkg = path,
+    write_back_to_path = TRUE,
+    write_to_csv = FALSE,
+    write_to_rdata = FALSE,
+    return_object = TRUE
+  ))
+
+  testthat::expect_s3_class(out, "sf")
+
+  # and the style survived the write-back: delete_dsn would have taken the whole file
+  con <- DBI::dbConnect(RSQLite::SQLite(), path)
+  on.exit(DBI::dbDisconnect(con), add = TRUE)
+  testthat::expect_equal(
+    DBI::dbGetQuery(con, "SELECT COUNT(*) AS n FROM layer_styles")$n,
+    1L
+  )
 })

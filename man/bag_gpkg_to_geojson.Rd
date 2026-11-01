@@ -27,6 +27,14 @@ GeoJSON as WGS 84 and removed the \code{crs} member, so a file written in a proj
 renders in the wrong place everywhere that follows the RFC — GitHub's preview, Leaflet,
 Mapbox — while opening correctly in QGIS, which still honours the member. BC Albers is
 the usual CRS of a BC GeoPackage, which is exactly the case that would break.
+
+A layer with no usable CRS is therefore \strong{refused}, and refused before anything is
+written, so a GeoPackage is converted whole or not at all. The check is not
+\code{is.na(sf::st_crs(x))}: GDAL's GeoPackage driver never returns a missing CRS. The
+format reserves \code{srs_id} −1 for "undefined Cartesian" and 0 for "undefined
+geographic", and both read back as real CRS objects — the first cannot be transformed
+at all, and the second would be silently taken for WGS 84. \code{sf::st_write()} itself
+produces the −1 case when handed an object whose CRS is \code{NA}.
 }
 \examples{
 \dontrun{

@@ -226,3 +226,65 @@ testthat::test_that("bag_assign_utm leaves a caller's own epsg column alone", {
   testthat::expect_true("epsg" %in% names(out))
   testthat::expect_equal(out$epsg, c("keep-a", "keep-b", "keep-c"))
 })
+
+testthat::test_that("bag_assign_utm keeps a row whose coordinates are missing", {
+  testthat::skip_if_not_installed("sf")
+
+  # An empty POINT is a field row entered without a GPS fix. sort() drops its NA zone, so
+  # the row joined no group -- and `epsg == epsg_zone` was NA for it in EVERY pass, which
+  # [.data.frame answers with a fabricated all-NA row. One such row became three phantom
+  # rows and its own attributes were lost, on a frame bag_gpkg_refresh() writes to disk.
+  d <- sf::st_sf(
+    site = c("a", "b", "c", "d"),
+    note = c("w", "x", "y", "z"),
+    geometry = sf::st_sfc(
+      sf::st_point(c(-128.5, 54.5)), sf::st_point(c(-123.5, 54.5)),
+      sf::st_point(c(-118.5, 54.5)), sf::st_point(),
+      crs = 4326
+    )
+  )
+
+  out <- suppressWarnings(bag_assign_utm(d))
+
+  testthat::expect_equal(nrow(out), nrow(d))
+  testthat::expect_setequal(out$site, d$site)
+  # the attributes of the unplaced row survive, which is the half a row count misses
+  testthat::expect_equal(out$note[out$site == "d"], "z")
+  testthat::expect_true(is.na(out$utm_zone[out$site == "d"]))
+  testthat::expect_true(is.na(out$easting[out$site == "d"]))
+  testthat::expect_true(is.na(out$northing[out$site == "d"]))
+  # and the placed rows are unaffected
+  testthat::expect_equal(out$utm_zone[out$site %in% c("a", "b", "c")], c(9, 10, 11))
+})
+
+testthat::test_that("bag_assign_utm says so when it cannot place a row", {
+  testthat::skip_if_not_installed("sf")
+
+  d <- sf::st_sf(
+    site = c("a", "b"),
+    geometry = sf::st_sfc(sf::st_point(c(-128.5, 54.5)), sf::st_point(), crs = 4326)
+  )
+  d$easting <- 0
+  d$northing <- 0
+
+  w <- testthat::expect_warning(bag_assign_utm(d), "no usable coordinates")
+  testthat::expect_match(conditionMessage(w), "1 row")
+  testthat::expect_match(conditionMessage(w), "every other column is kept")
+})
+
+testthat::test_that("bag_assign_utm names only the coordinate argument that is absent", {
+  testthat::skip_if_not_installed("sf")
+
+  # The predicate is an OR and the message was an AND, so a caller who typo'd one
+  # argument was told both were wrong and sent to check the one that was right.
+  d <- three_zones()
+  d$easting <- 0
+
+  w <- testthat::expect_warning(bag_assign_utm(d, col_northing = "north_m"))
+  msg <- conditionMessage(w)
+
+  testthat::expect_match(msg, "col_northing")
+  testthat::expect_match(msg, "north_m")
+  testthat::expect_no_match(msg, "col_easting")
+  testthat::expect_match(msg, "does not name a column")
+})

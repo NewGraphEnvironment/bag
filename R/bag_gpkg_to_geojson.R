@@ -9,6 +9,14 @@
 #' renders in the wrong place everywhere that follows the RFC — GitHub's preview, Leaflet,
 #' Mapbox — while opening correctly in QGIS, which still honours the member. BC Albers is
 #' the usual CRS of a BC GeoPackage, which is exactly the case that would break.
+#'
+#' A layer with no usable CRS is therefore **refused**, and refused before anything is
+#' written, so a GeoPackage is converted whole or not at all. The check is not
+#' `is.na(sf::st_crs(x))`: GDAL's GeoPackage driver never returns a missing CRS. The
+#' format reserves `srs_id` −1 for "undefined Cartesian" and 0 for "undefined
+#' geographic", and both read back as real CRS objects — the first cannot be transformed
+#' at all, and the second would be silently taken for WGS 84. `sf::st_write()` itself
+#' produces the −1 case when handed an object whose CRS is `NA`.
 #' @param dir_in [character] Directory holding the GeoPackage.
 #' @param dir_out [character] Directory to write the GeoJSON files to. Created if absent.
 #' @param file_name_in [character] Name of the GeoPackage, without the `.gpkg` extension.
@@ -22,7 +30,6 @@
 #' @importFrom chk chk_dir chk_string
 #' @importFrom cli cli_abort cli_alert_success
 #' @importFrom fs dir_create path
-#' @importFrom purrr pluck
 #' @importFrom sf st_crs st_layers st_read st_transform st_write
 #'
 #' @examples
@@ -47,11 +54,24 @@ bag_gpkg_to_geojson <- function(dir_in, dir_out, file_name_in) {
 
   fs::dir_create(dir_out)
 
-  layer_names <- sf::st_layers(gpkg_path) |>
-    purrr::pluck("name")
+  layers <- sf::st_layers(gpkg_path)
+  layer_names <- layers$name
 
   if (length(layer_names) == 0) {
     cli::cli_abort("{.path {gpkg_path}} contains no layers.")
+  }
+
+  # Checked over every layer first, so the loop below cannot abort part way and leave a
+  # partial set of .geojson files behind with nothing said about it.
+  unreferenced <- layer_names[vapply(layers$crs, .bag_crs_unusable, logical(1))]
+  if (length(unreferenced) > 0) {
+    cli::cli_abort(c(
+      "{.path {gpkg_path}} has {length(unreferenced)} layer{?s} with no usable CRS:        {.val {unreferenced}}.",
+      i = "GeoJSON is WGS 84 by definition, so coordinates with no CRS cannot be
+           written correctly.",
+      i = "{cli::qty(length(unreferenced))}Set a CRS on {?it/them} first, with
+           {.fn sf::st_crs}."
+    ))
   }
 
   paths_out <- character(length(layer_names))
@@ -62,10 +82,8 @@ bag_gpkg_to_geojson <- function(dir_in, dir_out, file_name_in) {
     path_out <- fs::path(dir_out, paste0(layer_name, ".geojson"))
 
     # RFC 7946 is WGS 84 only. A layer already in 4326 is left alone rather than round
-    # tripped, and one whose CRS is missing is written as it stands -- st_transform()
-    # cannot guess, and refusing would make the function useless on an unreferenced layer.
-    crs_in <- sf::st_crs(d)
-    if (!is.na(crs_in) && crs_in != sf::st_crs(4326)) {
+    # tripped. An unusable CRS was refused above, before anything was written.
+    if (sf::st_crs(d) != sf::st_crs(4326)) {
       d <- sf::st_transform(d, crs = 4326)
     }
 

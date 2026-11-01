@@ -178,3 +178,43 @@ testthat::test_that("bag_bcdc_index flags a package with no resource_df", {
 
   testthat::expect_message(try(f(), silent = TRUE), "resource_df")
 })
+
+testthat::test_that("bag_bcdc_index survives a catalogue where no package carries notes", {
+  testthat::skip_if_not_installed("mockery")
+
+  # The same pluck() -> bind_rows() hole .bag_bcdc_schtab() was rewritten to close:
+  # pluck() gives NULL for a missing element, list() drops a NULL entry, and bind_rows()
+  # NA-fills the gap only while some OTHER package supplied the field. When none does,
+  # the column is absent altogether and the code downstream fails naming a column the
+  # caller never passed.
+  strip_notes <- function(p) {
+    p$notes <- NULL
+    p
+  }
+  value <- lapply(fake_search(), strip_notes)
+
+  f <- stub_search(bag_bcdc_index, value = value)
+  out <- f()
+
+  testthat::expect_true("description" %in% names(out))
+  testthat::expect_true(all(is.na(out$description)))
+  # and the rest of the table is unaffected
+  testthat::expect_true(all(c("object_name", "package_name", "id_package") %in% names(out)))
+  testthat::expect_gt(nrow(out), 0)
+})
+
+testthat::test_that("bag_bcdc_index survives a package with no id", {
+  testthat::skip_if_not_installed("mockery")
+
+  value <- fake_search()
+  value <- lapply(value, function(p) {
+    p$id <- NULL
+    p
+  })
+
+  f <- stub_search(bag_bcdc_index, value = value)
+  out <- f()
+
+  testthat::expect_true("id_package" %in% names(out))
+  testthat::expect_true(all(is.na(out$id_package)))
+})

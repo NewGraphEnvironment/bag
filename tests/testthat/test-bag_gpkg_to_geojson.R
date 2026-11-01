@@ -145,3 +145,77 @@ testthat::test_that("bag_gpkg_to_geojson leaves a WGS 84 layer alone", {
   out <- bag_gpkg_to_geojson(dir_in = dir_in, dir_out = dir_out, file_name_in = "source")
   testthat::expect_true(sf::st_crs(sf::st_read(out[[1]], quiet = TRUE)) == sf::st_crs(4326))
 })
+
+# A GeoPackage layer with no spatial reference does NOT read back as a missing CRS: the
+# format reserves srs_id -1 ("undefined Cartesian") and 0 ("undefined geographic"), and
+# GDAL resolves both into real CRS objects. The first cannot be transformed at all; the
+# second transforms silently, taking the coordinates for WGS 84. Both are refused.
+seed_unreferenced <- function(srs_id = -1L) {
+  d <- sf::st_as_sf(
+    data.frame(id = 1:2, x = c(1, 2), y = c(1, 2)),
+    coords = c("x", "y"), crs = NA
+  )
+  dir_in <- tempfile("nocrs_")
+  fs::dir_create(dir_in)
+  path <- fs::path(dir_in, "source.gpkg")
+  suppressWarnings(sf::st_write(d, path, layer = "zzz_nocrs", quiet = TRUE))
+  if (srs_id == 0L) {
+    con <- DBI::dbConnect(RSQLite::SQLite(), path)
+    on.exit(DBI::dbDisconnect(con), add = TRUE)
+    DBI::dbExecute(con, "UPDATE gpkg_geometry_columns SET srs_id = 0")
+    DBI::dbExecute(con, "UPDATE gpkg_contents SET srs_id = 0")
+  }
+  dir_in
+}
+
+testthat::test_that("bag_gpkg_to_geojson refuses a layer whose CRS is undefined Cartesian", {
+  testthat::skip_if_not_installed("sf")
+
+  dir_in <- seed_unreferenced(-1L)
+  dir_out <- tempfile("nocrs_out_")
+  on.exit(unlink(c(dir_in, dir_out), recursive = TRUE), add = TRUE)
+
+  # sf's own writer produces this case, and is.na() on the CRS it reads back is FALSE.
+  crs_back <- sf::st_crs(sf::st_read(fs::path(dir_in, "source.gpkg"), quiet = TRUE))
+  testthat::expect_false(is.na(crs_back))
+
+  testthat::expect_error(
+    bag_gpkg_to_geojson(dir_in = dir_in, dir_out = dir_out, file_name_in = "source"),
+    "no usable CRS"
+  )
+})
+
+testthat::test_that("bag_gpkg_to_geojson refuses a layer whose CRS is undefined geographic", {
+  testthat::skip_if_not_installed("sf")
+  testthat::skip_if_not_installed("RSQLite")
+  testthat::skip_if_not_installed("DBI")
+
+  dir_in <- seed_unreferenced(0L)
+  dir_out <- tempfile("nocrs0_out_")
+  on.exit(unlink(c(dir_in, dir_out), recursive = TRUE), add = TRUE)
+
+  # This one TRANSFORMS without error -- GDAL takes it for WGS 84 -- so a check that only
+  # tried the transform would let it through and write coordinates on an assumption.
+  testthat::expect_error(
+    bag_gpkg_to_geojson(dir_in = dir_in, dir_out = dir_out, file_name_in = "source"),
+    "no usable CRS"
+  )
+})
+
+testthat::test_that("bag_gpkg_to_geojson writes nothing when one of several layers is unreferenced", {
+  testthat::skip_if_not_installed("sf")
+
+  # The refusal is up front, so a GeoPackage converts whole or not at all. Before this,
+  # the loop aborted part way and left the layers it had already reached on disk.
+  dir_in <- seed_unreferenced(-1L)
+  dir_out <- tempfile("partial_out_")
+  on.exit(unlink(c(dir_in, dir_out), recursive = TRUE), add = TRUE)
+  good <- sf::st_read(system.file("extdata/poly.gpkg", package = "bag"), quiet = TRUE)
+  sf::st_write(good, fs::path(dir_in, "source.gpkg"), layer = "aaa_good", quiet = TRUE)
+
+  testthat::expect_error(
+    bag_gpkg_to_geojson(dir_in = dir_in, dir_out = dir_out, file_name_in = "source"),
+    "no usable CRS"
+  )
+  testthat::expect_length(list.files(dir_out, pattern = "[.]geojson$"), 0L)
+})
