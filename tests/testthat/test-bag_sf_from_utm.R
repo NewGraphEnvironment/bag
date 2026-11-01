@@ -120,3 +120,23 @@ testthat::test_that("bag_sf_from_utm returns its columns in a fixed order", {
   )
   testthat::expect_equal(attr(out, "sf_column"), "geom")
 })
+
+testthat::test_that("bag_sf_from_utm returns an sf object on a zero-row input", {
+  # group_split() on a 0-row frame yields no groups, so binding them gave a plain tibble
+  # rather than the sf object the function documents.
+  testthat::skip_if_not_installed("sf")
+
+  df0 <- data.frame(
+    site = character(),
+    utm_zone = integer(),
+    easting = numeric(),
+    northing = numeric()
+  )
+
+  out <- bag_sf_from_utm(df0)
+
+  testthat::expect_s3_class(out, "sf")
+  testthat::expect_equal(nrow(out), 0L)
+  testthat::expect_true(sf::st_crs(out) == sf::st_crs(3005))
+  testthat::expect_equal(attr(out, "sf_column"), "geom")
+})

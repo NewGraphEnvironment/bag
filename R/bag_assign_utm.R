@@ -24,7 +24,7 @@
 #'
 #' @importFrom chk chk_string
 #' @importFrom cli cli_abort cli_warn
-#' @importFrom dplyr bind_rows mutate select
+#' @importFrom dplyr bind_rows mutate
 #' @importFrom purrr map
 #' @importFrom rlang := sym
 #' @importFrom sf st_coordinates st_crs st_geometry st_transform
@@ -60,7 +60,11 @@ bag_assign_utm <- function(dat = NULL,
     ))
   }
 
-  crs_og <- sf::st_crs(dat, parameters = TRUE)$epsg
+  # The CRS object, not its EPSG code. `st_crs(parameters = TRUE)$epsg` is NA for any CRS
+  # with no authority -- a proj string, or a WKT without one -- and st_transform(crs = NA)
+  # then aborts with "crs not found: is it missing?", naming neither the argument nor the
+  # CRS. The object round trips whether or not EPSG knows it.
+  crs_og <- sf::st_crs(dat)
 
   # Longitude is read once, off the WGS 84 copy, and injected with `!!` so a column of the
   # same name cannot shadow the local vector inside mutate(). The donor read it into a
@@ -68,30 +72,45 @@ bag_assign_utm <- function(dat = NULL,
   dat_wgs <- sf::st_transform(dat, crs = 4326)
   lon <- sf::st_coordinates(dat_wgs)[, 1]
 
+  # The zone CRS is a local vector, not a column. The donor kept it in one called `epsg`
+  # and selected it back out, which silently overwrote and then deleted any column of
+  # that name the caller already had -- the same class of problem the `long` column above
+  # was removed for.
   dat2 <- dat_wgs |>
-    dplyr::mutate(
-      {{ col_zone }} := floor((!!lon + 180) / 6) + 1,
-      epsg = 26900 + !!rlang::sym(col_zone)
-    )
+    dplyr::mutate({{ col_zone }} := floor((!!lon + 180) / 6) + 1)
+
+  epsg <- 26900 + dat2[[col_zone]]
+
+  read_coords <- function(grp, epsg_zone) {
+    grp_utm <- sf::st_transform(grp, crs = epsg_zone)
+    xy <- sf::st_coordinates(grp_utm)
+
+    grp_utm |>
+      dplyr::mutate(
+        {{ col_easting }} := round(!!xy[, 1], sig_dig),
+        {{ col_northing }} := round(!!xy[, 2], sig_dig)
+      ) |>
+      sf::st_transform(crs = crs_og)
+  }
+
+  zones <- unique(sort(epsg))
 
   # One pass per zone, keyed on the sorted zone values themselves. The donor paired a
   # group_split() with a separately derived CRS vector and relied on the two coming out in
   # the same order -- an invariant held together by a comment, which needed an
   # arrange(epsg) above to hold. Here each pass carries the CRS it transforms to, and the
   # sorted keys are what put the rows back in zone order, so neither is needed.
-  out_l <- purrr::map(unique(sort(dat2[["epsg"]])), function(epsg_zone) {
-    grp <- sf::st_transform(dat2[dat2[["epsg"]] == epsg_zone, ], crs = epsg_zone)
-    xy <- sf::st_coordinates(grp)
+  #
+  # No rows means no zones, and binding no groups gives a 0 x 0 tibble that loses every
+  # column the caller passed in. One pass over the empty frame produces the same columns
+  # instead, and it goes through the same bind_rows() so the column ORDER cannot diverge
+  # between the two paths -- that bind is what moves geometry last. The zone is a
+  # placeholder with no rows to place: 26909 is the westernmost of the three BC zones.
+  groups <- if (length(zones) == 0) {
+    list(read_coords(dat2, 26909))
+  } else {
+    purrr::map(zones, function(epsg_zone) read_coords(dat2[epsg == epsg_zone, ], epsg_zone))
+  }
 
-    grp |>
-      dplyr::mutate(
-        {{ col_easting }} := round(!!xy[, 1], sig_dig),
-        {{ col_northing }} := round(!!xy[, 2], sig_dig)
-      ) |>
-      sf::st_transform(crs = crs_og)
-  })
-
-  out_l |>
-    dplyr::bind_rows() |>
-    dplyr::select(-epsg)
+  dplyr::bind_rows(groups)
 }

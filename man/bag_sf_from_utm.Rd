@@ -21,8 +21,8 @@ bag_sf_from_utm(
 
 \item{col_northing}{\link{character} Name of the northing column.}
 
-\item{crs_return}{\link{numeric} EPSG code to return in. Must be geographic. Default 3005
-(BC Albers).}
+\item{crs_return}{\link{numeric} EPSG code to return in. Must be valid across every zone
+present — not a single UTM zone's CRS. Default 3005 (BC Albers).}
 }
 \value{
 An \code{sf} data frame in \code{crs_return}, ordered by UTM zone.
@@ -33,9 +33,13 @@ zone's projected CRS, transforms every group to one geographic CRS, and binds th
 together.
 }
 \details{
-The returned CRS must be geographic — BC Albers or WGS 84 rather than a UTM zone —
-because points from different zones cannot share a projected CRS without one of them
-being wrong.
+\code{crs_return} must be a CRS that is valid across every zone in the data — BC Albers
+(3005, the default) or WGS 84 (4326), rather than one UTM zone's own CRS, because a
+point from zone 9 expressed in zone 11's CRS is simply wrong. An earlier version of
+this sentence said "must be geographic", which excluded its own default: BC Albers is
+projected. The property that matters is province-wide validity, not geographic versus
+projected, and it is not something the function can check — a UTM \code{crs_return} is
+accepted and gives silently wrong coordinates for every zone but one.
 }
 \examples{
 \dontrun{

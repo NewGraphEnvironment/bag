@@ -332,3 +332,26 @@ testthat::test_that("bag_gpx_import writes both a gpx and a gpkg per layer", {
 
   testthat::expect_setequal(dests, c("gps_waypoints_2026_ai.gpx", "gps_2026.gpkg"))
 })
+
+testthat::test_that("bag_gpx_import reports nothing-found for a track directory that does not exist", {
+  testthat::skip_if_not_installed("sf")
+
+  # The track defaults are two Garmin mount subdirectories. A unit that has never
+  # archived has no Archive/, and an unmounted unit has neither, so fs::dir_ls() aborted
+  # [ENOENT] before the function's own "nothing written" branch could run. Every other
+  # test here passes a directory that exists.
+  d_out <- tempfile("gpxout_")
+  on.exit(unlink(d_out, recursive = TRUE), add = TRUE)
+
+  testthat::expect_message(
+    bag_gpx_import(
+      dir_gpx_waypoints = gpx_dir(files = character()),
+      dir_gpx_tracks = c("/no/such/dir/Archive", "/no/such/dir/Current"),
+      dir_out = d_out,
+      layer_output_name = "x",
+      gpkg_name = "g",
+      gpx_layer_type = "tracks"
+    ),
+    "No GPX files found"
+  )
+})

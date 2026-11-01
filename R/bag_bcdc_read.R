@@ -102,7 +102,7 @@ bag_bcdc_read <- function(bcdata_record_id,
         "Check that {.field {col_filter}} holds {.val {col_filter_value}}."
       },
       i = if (!is.null(col_extract)) {
-        "Check that {.field {col_extract}} {?is/are} a column{?s} of the record."
+        "Check that {.field {col_extract}} {?is a column/are columns} of the record."
       }
     ))
   }

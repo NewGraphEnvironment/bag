@@ -17,7 +17,9 @@ bag_gpkg_refresh(
 )
 }
 \arguments{
-\item{path_gpkg}{\link{character} Path to a GeoPackage holding exactly one point layer.}
+\item{path_gpkg}{\link{character} Path to a GeoPackage holding exactly one point layer. A
+GeoPackage with more than one layer is refused, because the write-back replaces the
+whole file.}
 
 \item{dir_backup}{\link{character} Directory for the backups. Created if absent.}
 
@@ -31,8 +33,9 @@ This is where the fish-passage package's site-id assignment is injected. That lo
 about site identity rather than about files, so it stays in that package and is passed
 in rather than imported — neither package depends on the other.}
 
-\item{write_back_to_path}{\link{logical} Overwrite \code{path_gpkg} with the result. Default
-\code{FALSE}.}
+\item{write_back_to_path}{\link{logical} Overwrite \code{path_gpkg} with the result, keeping the
+layer's name. Default \code{FALSE}. The write deletes and recreates the file, so anything
+else in it would be lost — which is why a multi-layer source is refused above.}
 
 \item{write_to_csv}{\link{logical} Write a geometry-dropped \code{.csv} backup. Default \code{TRUE}.}
 

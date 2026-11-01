@@ -33,7 +33,7 @@
 #' @importFrom chk chk_character chk_flag chk_string
 #' @importFrom cli cli_abort cli_alert_info
 #' @importFrom dplyr arrange bind_rows filter mutate pull
-#' @importFrom fs dir_create dir_ls path
+#' @importFrom fs dir_create path
 #' @importFrom lubridate ymd_hms
 #' @importFrom purrr map
 #' @importFrom rlang .data
@@ -108,8 +108,17 @@ bag_gpx_import <- function(dir_gpx_waypoints = "/Volumes/GARMIN/Garmin/GPX/",
   # track directories was read as GPX. Measured: a directory of four files returned all
   # four, including a .txt. The waypoint side used list.files(pattern = ".gpx"), an
   # unanchored regex that also matched "weird_gpx.csv".
+  #
+  # Both sides go through list.files(), which returns character(0) for a directory that
+  # does not exist where fs::dir_ls() aborts `[ENOENT]`. The track defaults are two
+  # Garmin mount subdirectories, and a unit that has never archived has no `Archive/`
+  # while an unmounted one has neither -- so dir_ls() killed the call, including
+  # `dates_view = TRUE`, before the "nothing written" branch below could report it.
   files_waypoints <- list.files(dir_gpx_waypoints, pattern = "\\.gpx$", full.names = TRUE)
-  files_tracks <- unlist(purrr::map(dir_gpx_tracks, ~ fs::dir_ls(.x, regexp = "\\.gpx$")))
+  files_tracks <- unlist(purrr::map(
+    dir_gpx_tracks,
+    ~ list.files(.x, pattern = "\\.gpx$", full.names = TRUE)
+  ))
 
   process_layer <- function(layer, files) {
     if (length(files) == 0) {

@@ -179,3 +179,50 @@ testthat::test_that("bag_assign_utm is not shadowed by columns named like its lo
   testthat::expect_equal(out$easting, reference$easting)
   testthat::expect_equal(out$northing, reference$northing)
 })
+
+testthat::test_that("bag_assign_utm keeps its columns on a zero-row input", {
+  testthat::skip_if_not_installed("sf")
+
+  # With no rows there are no zones, so the per-zone loop yields no groups. Binding those
+  # gives a 0 x 0 tibble, which loses every column the caller passed in. Reachable through
+  # bag_gpkg_refresh(), whose update_utm defaults to TRUE, on an empty field form.
+  out <- suppressWarnings(bag_assign_utm(three_zones()[0, ]))
+
+  testthat::expect_s3_class(out, "sf")
+  testthat::expect_equal(nrow(out), 0L)
+  testthat::expect_equal(
+    names(out),
+    c("site", "utm_zone", "easting", "northing", "geometry")
+  )
+})
+
+testthat::test_that("bag_assign_utm round trips a CRS with no EPSG code", {
+  testthat::skip_if_not_installed("sf")
+
+  # st_crs(parameters = TRUE)$epsg is NA for a CRS with no authority, and
+  # st_transform(crs = NA) then aborts "crs not found: is it missing?", naming nothing.
+  albers <- paste(
+    "+proj=aea +lat_1=50 +lat_2=58.5 +lat_0=45 +lon_0=-126",
+    "+datum=NAD83 +units=m +no_defs"
+  )
+  d <- sf::st_transform(three_zones(), albers)
+  testthat::expect_true(is.na(sf::st_crs(d, parameters = TRUE)$epsg))
+
+  out <- suppressWarnings(bag_assign_utm(d))
+  testthat::expect_equal(sf::st_crs(out), sf::st_crs(d))
+  testthat::expect_equal(out$utm_zone, c(9, 10, 11))
+})
+
+testthat::test_that("bag_assign_utm leaves a caller's own epsg column alone", {
+  testthat::skip_if_not_installed("sf")
+
+  # The donor held the zone CRS in a column called `epsg` and selected it back out, so a
+  # caller's column of that name was overwritten and then deleted, silently.
+  d <- three_zones()
+  d$epsg <- c("keep-a", "keep-b", "keep-c")
+
+  out <- suppressWarnings(bag_assign_utm(d))
+
+  testthat::expect_true("epsg" %in% names(out))
+  testthat::expect_equal(out$epsg, c("keep-a", "keep-b", "keep-c"))
+})

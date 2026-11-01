@@ -222,3 +222,74 @@ testthat::test_that("bag_gpkg_refresh rejects a GeoPackage that is not points", 
 
   testthat::expect_error(bag_gpkg_refresh(path), "POINT geometry")
 })
+
+testthat::test_that("bag_gpkg_refresh refuses a GeoPackage with more than one layer", {
+  testthat::skip_if_not_installed("sf")
+
+  # st_read() with no `layer` silently takes the first, and the write-back deletes the
+  # whole file -- so without this guard a second layer was destroyed. Measured before the
+  # guard: `sites` + `aoi` came back as one layer, `aoi` gone.
+  path <- seed_point_gpkg()
+  on.exit(unlink(dirname(path), recursive = TRUE), add = TRUE)
+  aoi <- sf::st_as_sf(sf::st_sfc(
+    sf::st_polygon(list(cbind(c(-129, -118, -118, -129, -129), c(54, 54, 55, 55, 54)))),
+    crs = 4326
+  ))
+  sf::st_write(aoi, path, layer = "aoi", quiet = TRUE)
+  testthat::expect_length(sf::st_layers(path)$name, 2L)
+
+  testthat::expect_error(
+    bag_gpkg_refresh(path_gpkg = path, write_to_csv = FALSE, write_to_rdata = FALSE),
+    "exactly one layer"
+  )
+
+  # and nothing was written on the way to the abort
+  testthat::expect_setequal(sf::st_layers(path)$name, c("form_fiss_site_2026", "aoi"))
+})
+
+testthat::test_that("bag_gpkg_refresh keeps the layer's name when writing back", {
+  testthat::skip_if_not_installed("sf")
+
+  # st_write() names the layer after the file's base name unless told otherwise, so a
+  # layer called `sites` came back as `form_fiss_site_2026` and every QGIS project or
+  # Mergin form naming it broke. seed_point_gpkg()'s own layer name already equals the
+  # basename, so the rename is invisible to every other test here.
+  path <- seed_point_gpkg()
+  on.exit(unlink(dirname(path), recursive = TRUE), add = TRUE)
+  d <- sf::st_read(path, quiet = TRUE)
+  unlink(path)
+  sf::st_write(d, path, layer = "sites", quiet = TRUE)
+  testthat::expect_equal(sf::st_layers(path)$name, "sites")
+
+  suppressWarnings(bag_gpkg_refresh(
+    path_gpkg = path,
+    write_back_to_path = TRUE,
+    write_to_csv = FALSE,
+    write_to_rdata = FALSE
+  ))
+
+  testthat::expect_equal(sf::st_layers(path)$name, "sites")
+})
+
+testthat::test_that("bag_gpkg_refresh handles a point layer with no features", {
+  testthat::skip_if_not_installed("sf")
+
+  # A freshly created, not-yet-filled field form. sf reads its geometry as sfc_GEOMETRY,
+  # and with update_utm on, the UTM step then has no zones to loop over.
+  path <- fs::path(tempfile("emptyform_"), "form_fiss_site_2026.gpkg")
+  fs::dir_create(dirname(path))
+  on.exit(unlink(dirname(path), recursive = TRUE), add = TRUE)
+  d <- sf::st_read(seed_point_gpkg(), quiet = TRUE)
+  sf::st_write(d[0, ], path, quiet = TRUE)
+
+  out <- suppressWarnings(bag_gpkg_refresh(
+    path_gpkg = path,
+    write_to_csv = FALSE,
+    write_to_rdata = FALSE,
+    return_object = TRUE
+  ))
+
+  testthat::expect_s3_class(out, "sf")
+  testthat::expect_equal(nrow(out), 0L)
+  testthat::expect_true(all(c("easting", "northing", "utm_zone") %in% names(out)))
+})

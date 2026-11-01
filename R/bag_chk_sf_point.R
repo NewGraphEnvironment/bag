@@ -24,6 +24,13 @@
 #' `sf::st_coordinates(x)[, 1]` and assign it as a column, which for MULTIPOINT returns
 #' more rows than features and fails with a length error several steps later.
 #'
+#' A **zero-feature** layer is accepted, because `sf::st_read()` returns `sfc_GEOMETRY`
+#' for one however the file declares its type — measured on a GeoPackage whose
+#' `st_layers()` reports `geomtype` `Point` and `features` 0. A freshly created,
+#' not-yet-filled field form is exactly that, and rejecting it would report "its geometry
+#' is `<sfc_GEOMETRY>`", which is false: it is a point layer with nothing in it. The
+#' MULTIPOINT consequence the guard exists for cannot arise with no features.
+#'
 #' @param dat The object to check.
 #' @param arg [character] The argument name to use in the message.
 #'
@@ -42,10 +49,11 @@
   if (!inherits(dat, "sf")) {
     cli::cli_abort("{.arg {arg}} must be an {.cls sf} object.")
   }
-  if (!inherits(sf::st_geometry(dat), "sfc_POINT")) {
+  geom <- sf::st_geometry(dat)
+  if (length(geom) > 0 && !inherits(geom, "sfc_POINT")) {
     cli::cli_abort(c(
       "{.arg {arg}} must have POINT geometry.",
-      x = "Its geometry is {.cls {class(sf::st_geometry(dat))[1]}}."
+      x = "Its geometry is {.cls {class(geom)[1]}}."
     ))
   }
   invisible(dat)

@@ -186,3 +186,21 @@ testthat::test_that("bag_bcdc_read returns an empty result when neither argument
   out <- f("bc-airports")
   testthat::expect_equal(nrow(out), 0L)
 })
+
+testthat::test_that("bag_bcdc_read's not-found hint reads correctly for several columns", {
+  testthat::skip_if_not_installed("mockery")
+
+  # `{?is/are} a column{?s}` takes ONE quantity for both markers, so two columns rendered
+  # "are a columns". Asserted on the message the function actually raises, not on a copy
+  # of the template -- a copy would agree with itself whatever the source says.
+  f <- stub_bcdata(bag_bcdc_read, layer = fake_layer(0L))
+
+  one <- testthat::expect_error(f("bc-airports", col_extract = "AIRPORT_NAME"))
+  many <- testthat::expect_error(
+    f("bc-airports", col_extract = c("AIRPORT_NAME", "DESCRIPTION"))
+  )
+
+  testthat::expect_match(conditionMessage(one), "is a column of the record")
+  testthat::expect_match(conditionMessage(many), "are columns of the record")
+  testthat::expect_false(grepl("a columns", conditionMessage(many), fixed = TRUE))
+})

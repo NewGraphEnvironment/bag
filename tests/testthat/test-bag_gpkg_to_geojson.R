@@ -106,3 +106,42 @@ testthat::test_that("bag_gpkg_to_geojson overwrites a geojson from an earlier ru
     n_in
   )
 })
+
+testthat::test_that("bag_gpkg_to_geojson writes WGS 84 whatever the source CRS", {
+  testthat::skip_if_not_installed("sf")
+
+  # The bundled fixture is already WGS 84, so no test built on it can reach this. BC
+  # Albers is the normal CRS of a BC GeoPackage, and RFC 7946 removed the `crs` member,
+  # so a projected file renders in the wrong place wherever the RFC is followed.
+  src <- sf::st_transform(sf::st_read(system.file("extdata/poly.gpkg", package = "bag"),
+                                      quiet = TRUE), 3005)
+  dir_in <- tempfile("albers_in_")
+  dir_out <- tempfile("albers_out_")
+  fs::dir_create(dir_in)
+  on.exit(unlink(c(dir_in, dir_out), recursive = TRUE), add = TRUE)
+  sf::st_write(src, fs::path(dir_in, "albers.gpkg"), layer = "aoi", quiet = TRUE)
+
+  out <- bag_gpkg_to_geojson(dir_in = dir_in, dir_out = dir_out, file_name_in = "albers")
+
+  testthat::expect_true(sf::st_crs(sf::st_read(out[[1]], quiet = TRUE)) == sf::st_crs(4326))
+
+  # And in the bytes, not only through sf -- which honours a `crs` member and so reports
+  # 3005 as 3005 rather than as a defect. Degrees are bounded by 180; BC Albers metres
+  # for this fixture run to millions.
+  txt <- paste(readLines(out[[1]], warn = FALSE), collapse = " ")
+  testthat::expect_false(grepl("EPSG::3005", txt, fixed = TRUE))
+  nums <- as.numeric(regmatches(txt, gregexpr("-?[0-9]+\\.[0-9]+", txt))[[1]])
+  testthat::expect_gt(length(nums), 0)
+  testthat::expect_true(all(abs(nums) <= 180))
+})
+
+testthat::test_that("bag_gpkg_to_geojson leaves a WGS 84 layer alone", {
+  testthat::skip_if_not_installed("sf")
+
+  dir_in <- seed_gpkg()
+  dir_out <- tempfile("wgs_out_")
+  on.exit(unlink(c(dir_in, dir_out), recursive = TRUE), add = TRUE)
+
+  out <- bag_gpkg_to_geojson(dir_in = dir_in, dir_out = dir_out, file_name_in = "source")
+  testthat::expect_true(sf::st_crs(sf::st_read(out[[1]], quiet = TRUE)) == sf::st_crs(4326))
+})

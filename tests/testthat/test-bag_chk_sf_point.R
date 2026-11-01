@@ -71,3 +71,21 @@ testthat::test_that(".bag_chk_sf_point names the geometry it got", {
 testthat::test_that(".bag_chk_sf_point uses the argument name it is given", {
   testthat::expect_error(.bag_chk_sf_point(NULL, arg = "the layer in path_gpkg"), "path_gpkg")
 })
+
+testthat::test_that(".bag_chk_sf_point accepts a zero-feature point layer", {
+  testthat::skip_if_not_installed("sf")
+
+  # sf::st_read() returns sfc_GEOMETRY for an empty layer however the file declares its
+  # type, so a freshly created, not-yet-filled field form would be rejected with a false
+  # diagnosis -- "its geometry is <sfc_GEOMETRY>" -- on a layer that is points.
+  path <- fs::path(tempfile("emptypt_"), "sites.gpkg")
+  fs::dir_create(dirname(path))
+  on.exit(unlink(dirname(path), recursive = TRUE), add = TRUE)
+  sf::st_write(pt()[0, ], path, layer = "sites", quiet = TRUE)
+
+  testthat::expect_equal(sf::st_layers(path)$geomtype[[1]], "Point")
+  empty <- sf::st_read(path, quiet = TRUE)
+  testthat::expect_s3_class(sf::st_geometry(empty), "sfc_GEOMETRY")
+
+  testthat::expect_silent(.bag_chk_sf_point(empty))
+})

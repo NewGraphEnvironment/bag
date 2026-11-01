@@ -11,7 +11,9 @@
 #' Both backups exist on purpose. The `.csv` is the versionable one; the `.RData` holds the
 #' object exactly, because rebuilding it from the csv introduces small differences.
 #'
-#' @param path_gpkg [character] Path to a GeoPackage holding exactly one point layer.
+#' @param path_gpkg [character] Path to a GeoPackage holding exactly one point layer. A
+#'   GeoPackage with more than one layer is refused, because the write-back replaces the
+#'   whole file.
 #' @param dir_backup [character] Directory for the backups. Created if absent.
 #' @param update_utm [logical] Refresh the UTM columns with [bag_assign_utm()]. Default
 #'   `TRUE`.
@@ -21,8 +23,9 @@
 #'   This is where the fish-passage package's site-id assignment is injected. That logic is
 #'   about site identity rather than about files, so it stays in that package and is passed
 #'   in rather than imported — neither package depends on the other.
-#' @param write_back_to_path [logical] Overwrite `path_gpkg` with the result. Default
-#'   `FALSE`.
+#' @param write_back_to_path [logical] Overwrite `path_gpkg` with the result, keeping the
+#'   layer's name. Default `FALSE`. The write deletes and recreates the file, so anything
+#'   else in it would be lost — which is why a multi-layer source is refused above.
 #' @param write_to_csv [logical] Write a geometry-dropped `.csv` backup. Default `TRUE`.
 #' @param write_to_rdata [logical] Write an `.RData` backup holding the object under the
 #'   GeoPackage's base name. Default `TRUE`.
@@ -41,7 +44,7 @@
 #' @importFrom cli cli_abort
 #' @importFrom fs dir_create path
 #' @importFrom readr write_csv
-#' @importFrom sf st_drop_geometry st_read st_write
+#' @importFrom sf st_drop_geometry st_layers st_read st_write
 #' @importFrom tools file_path_sans_ext
 #'
 #' @examples
@@ -77,7 +80,20 @@ bag_gpkg_refresh <- function(path_gpkg = NULL,
   chk::chk_flag(return_object)
   if (!is.null(fn_site_id)) chk::chk_function(fn_site_id)
 
-  dat <- sf::st_read(dsn = path_gpkg, quiet = TRUE)
+  # The documented precondition, enforced. st_read() with no `layer` silently takes the
+  # first one, so without this a multi-layer GeoPackage would be read in part and -- with
+  # write_back_to_path -- written back as a single layer, destroying the rest.
+  layers <- sf::st_layers(path_gpkg)
+  if (length(layers$name) != 1L) {
+    cli::cli_abort(c(
+      "{.arg path_gpkg} must hold exactly one layer.",
+      x = "{.path {path_gpkg}} holds {length(layers$name)}: {.val {layers$name}}.",
+      i = "Writing back replaces the whole GeoPackage, so the others would be lost."
+    ))
+  }
+  layer_name <- layers$name[[1]]
+
+  dat <- sf::st_read(dsn = path_gpkg, layer = layer_name, quiet = TRUE)
 
   .bag_chk_sf_point(dat, arg = "the layer in path_gpkg")
 
@@ -92,7 +108,15 @@ bag_gpkg_refresh <- function(path_gpkg = NULL,
   }
 
   if (write_back_to_path) {
-    sf::st_write(dat, path_gpkg, append = FALSE, delete_dsn = TRUE, quiet = TRUE)
+    # `layer` is passed explicitly: st_write() otherwise names the layer after the file's
+    # base name, so a layer called `sites` in `form_fiss_site_2026.gpkg` came back called
+    # `form_fiss_site_2026` and every QGIS project, Mergin form and script naming it broke.
+    # The donor had the same defect and wrote without `quiet = TRUE`, so a user at least
+    # saw "Writing layer '<basename>'".
+    sf::st_write(
+      dat, path_gpkg,
+      layer = layer_name, append = FALSE, delete_dsn = TRUE, quiet = TRUE
+    )
   }
 
   if (write_to_csv) {

@@ -2,8 +2,13 @@
 #'
 #' Reads each layer of a GeoPackage and writes it as its own `.geojson` file. GeoJSON is
 #' convenient for mapping: QGIS picks up changes without a restart, and GitHub and other web
-#' platforms render it directly when it is in WGS 84.
+#' platforms render it directly.
 #'
+#' **Every layer is transformed to WGS 84 (EPSG:4326) on the way out.** RFC 7946 defines
+#' GeoJSON as WGS 84 and removed the `crs` member, so a file written in a projected CRS
+#' renders in the wrong place everywhere that follows the RFC — GitHub's preview, Leaflet,
+#' Mapbox — while opening correctly in QGIS, which still honours the member. BC Albers is
+#' the usual CRS of a BC GeoPackage, which is exactly the case that would break.
 #' @param dir_in [character] Directory holding the GeoPackage.
 #' @param dir_out [character] Directory to write the GeoJSON files to. Created if absent.
 #' @param file_name_in [character] Name of the GeoPackage, without the `.gpkg` extension.
@@ -18,7 +23,7 @@
 #' @importFrom cli cli_abort cli_alert_success
 #' @importFrom fs dir_create path
 #' @importFrom purrr pluck
-#' @importFrom sf st_layers st_read st_write
+#' @importFrom sf st_crs st_layers st_read st_transform st_write
 #'
 #' @examples
 #' \dontrun{
@@ -55,6 +60,14 @@ bag_gpkg_to_geojson <- function(dir_in, dir_out, file_name_in) {
     layer_name <- layer_names[[i]]
     d <- sf::st_read(dsn = gpkg_path, layer = layer_name, quiet = TRUE)
     path_out <- fs::path(dir_out, paste0(layer_name, ".geojson"))
+
+    # RFC 7946 is WGS 84 only. A layer already in 4326 is left alone rather than round
+    # tripped, and one whose CRS is missing is written as it stands -- st_transform()
+    # cannot guess, and refusing would make the function useless on an unreferenced layer.
+    crs_in <- sf::st_crs(d)
+    if (!is.na(crs_in) && crs_in != sf::st_crs(4326)) {
+      d <- sf::st_transform(d, crs = 4326)
+    }
 
     # delete_dsn rather than append: one layer per file, rewritten each run.
     sf::st_write(d, dsn = path_out, delete_dsn = TRUE, quiet = TRUE)

@@ -105,3 +105,20 @@ testthat::test_that("bag_assign_latlong is not shadowed by a column named like i
   testthat::expect_equal(out$lon, unname(expected[, 1]))
   testthat::expect_equal(out$lat, unname(expected[, 2]))
 })
+
+testthat::test_that("bag_assign_latlong round trips a CRS with no EPSG code", {
+  testthat::skip_if_not_installed("sf")
+
+  # st_crs(parameters = TRUE)$epsg is NA for a CRS with no authority, and
+  # st_transform(crs = NA) then aborts "crs not found: is it missing?", naming nothing.
+  albers <- paste(
+    "+proj=aea +lat_1=50 +lat_2=58.5 +lat_0=45 +lon_0=-126",
+    "+datum=NAD83 +units=m +no_defs"
+  )
+  d <- sf::st_transform(pts(), albers)
+  testthat::expect_true(is.na(sf::st_crs(d, parameters = TRUE)$epsg))
+
+  out <- bag_assign_latlong(d)
+  testthat::expect_equal(sf::st_crs(out), sf::st_crs(d))
+  testthat::expect_equal(round(out$lon, 4), c(-128.5, -123.5))
+})

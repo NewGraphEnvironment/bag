@@ -19,7 +19,14 @@ A \link{character} vector of the files written, invisibly.
 \description{
 Reads each layer of a GeoPackage and writes it as its own \code{.geojson} file. GeoJSON is
 convenient for mapping: QGIS picks up changes without a restart, and GitHub and other web
-platforms render it directly when it is in WGS 84.
+platforms render it directly.
+}
+\details{
+\strong{Every layer is transformed to WGS 84 (EPSG:4326) on the way out.} RFC 7946 defines
+GeoJSON as WGS 84 and removed the \code{crs} member, so a file written in a projected CRS
+renders in the wrong place everywhere that follows the RFC — GitHub's preview, Leaflet,
+Mapbox — while opening correctly in QGIS, which still honours the member. BC Albers is
+the usual CRS of a BC GeoPackage, which is exactly the case that would break.
 }
 \examples{
 \dontrun{

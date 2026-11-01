@@ -36,7 +36,9 @@ bag_assign_latlong <- function(dat = NULL,
   chk::chk_string(col_lon)
   chk::chk_string(col_lat)
 
-  crs_og <- sf::st_crs(dat, parameters = TRUE)$epsg
+  # The CRS object, not its EPSG code: `st_crs(parameters = TRUE)$epsg` is NA for a CRS
+  # with no authority, and st_transform(crs = NA) then aborts naming nothing.
+  crs_og <- sf::st_crs(dat)
 
   dat_wgs <- sf::st_transform(dat, crs = 4326)
 
