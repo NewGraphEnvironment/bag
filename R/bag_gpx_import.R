@@ -27,7 +27,7 @@
 #'
 #' @return `NULL`, invisibly. Called for the files it writes.
 #'
-#' @family files
+#' @family download
 #' @export
 #'
 #' @importFrom chk chk_character chk_flag chk_string

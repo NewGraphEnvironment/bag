@@ -74,10 +74,8 @@ bag_gpx_import(
 }
 }
 \seealso{
-Other files: 
-\code{\link{bag_fs_backup}()},
-\code{\link{bag_gpkg_to_geojson}()},
-\code{\link{bag_layer_info}()},
-\code{\link{bag_sp_gpkg_backup}()}
+Other download: 
+\code{\link{bag_url}()},
+\code{\link{bag_wfs}()}
 }
-\concept{files}
+\concept{download}

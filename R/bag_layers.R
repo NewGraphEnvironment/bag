@@ -22,7 +22,7 @@
 #' @examples
 #' \dontrun{
 #' # Get layer information from a GeoPackage
-#' layer_info <- bag_layer_info("path/to/data.gpkg")
+#' layer_info <- bag_layers("path/to/data.gpkg")
 #' }
 #'
 #' @importFrom sf st_layers st_read st_geometry_type
@@ -31,7 +31,7 @@
 #' @importFrom glue glue
 #'
 #' @export
-bag_layer_info <- function(path) {
+bag_layers <- function(path) {
   sf::st_layers(path) |>
     as.data.frame() |>
     dplyr::mutate(

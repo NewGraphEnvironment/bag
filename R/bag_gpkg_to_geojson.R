@@ -10,7 +10,7 @@
 #'
 #' @return A [character] vector of the files written, invisibly.
 #'
-#' @seealso [bag_layer_info()] for listing a data source's layers and geometry types.
+#' @seealso [bag_layers()] for listing a data source's layers and geometry types.
 #' @family files
 #' @export
 #'

@@ -161,8 +161,7 @@ builds the request from parts and writes a GeoJSON file to a directory; this
 function takes an already-built URL straight into a GeoPackage layer.
 
 Other download: 
-\code{\link{bag_bcd_get_data}()},
-\code{\link{bag_bcdata}()},
+\code{\link{bag_gpx_import}()},
 \code{\link{bag_wfs}()}
 }
 \concept{download}

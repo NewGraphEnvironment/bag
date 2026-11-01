@@ -12,8 +12,8 @@
 #'
 #' @return [character] The path written, invisibly.
 #'
-#' @seealso [bag_sp_gpkg_backup()] for a GeoPackage backup that also writes csv and RData
-#'   copies.
+#' @seealso [bag_gpkg_refresh()] for a GeoPackage whose coordinate columns are refreshed
+#'   as well, with csv and RData copies alongside.
 #' @family files
 #' @export
 #'
@@ -23,16 +23,16 @@
 #'
 #' @examples
 #' \dontrun{
-#' bag_fs_backup(
+#' bag_backup(
 #'   path_dir_in = "~/Projects/gis/my_project",
 #'   path_in_file = "background_layers.gpkg",
 #'   path_dir_out = "~/Projects/gis/backups"
 #' )
 #' }
-bag_fs_backup <- function(path_dir_in,
-                          path_in_file,
-                          path_dir_out,
-                          stamp = format(Sys.time(), "%Y%m%d%H%M")) {
+bag_backup <- function(path_dir_in,
+                       path_in_file,
+                       path_dir_out,
+                       stamp = format(Sys.time(), "%Y%m%d%H%M")) {
 
   chk::chk_string(path_dir_in)
   chk::chk_string(path_in_file)

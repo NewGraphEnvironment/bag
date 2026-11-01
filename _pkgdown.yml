@@ -4,15 +4,19 @@ template:
 
 reference:
 - title: Fetch
-  desc: Download public data to disk, or read it into R.
+  desc: >
+    Bring data onto disk — from a URL, from a GeoServer WFS endpoint, or from a GPS
+    unit's GPX files.
   contents:
   - has_concept("download")
-- title: Catalogue metadata
-  desc: Find a BC Data Catalogue layer and describe its columns.
+- title: BC Data Catalogue
+  desc: >
+    Find a catalogue layer and describe its columns, then download it to a GeoPackage or
+    read it into R.
   contents:
-  - has_concept("metadata")
+  - has_concept("catalogue")
 - title: Files
-  desc: Read, convert, inspect and back up spatial files.
+  desc: Inspect, convert and back up spatial files.
   contents:
   - has_concept("files")
 - title: Coordinates

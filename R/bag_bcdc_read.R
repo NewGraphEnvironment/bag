@@ -21,9 +21,9 @@
 #' @return An `sf` object with cleaned names, or a [tibble::tibble] when `drop_geom` is
 #'   `TRUE`.
 #'
-#' @seealso [bag_meta_bcd_xref()] for finding a record's object name, and [bag_bcdata()] to
+#' @seealso [bag_bcdc_index()] for finding a record's object name, and [bag_bcdc()] to
 #'   write a catalogue layer straight to a GeoPackage instead of returning it.
-#' @family download
+#' @family catalogue
 #' @export
 #'
 #' @importFrom bcdata bcdc_query_geodata collect
@@ -37,7 +37,7 @@
 #'
 #' @examples
 #' \dontrun{
-#' bag_bcd_get_data(
+#' bag_bcdc_read(
 #'   bcdata_record_id = "7ecfafa6-5e18-48cd-8d9b-eae5b5ea2881",
 #'   col_filter = "FUNDING_PROJECT_NUMBER",
 #'   col_filter_value = "skeena_2023_Phase1",
@@ -46,16 +46,16 @@
 #' )
 #'
 #' # every record, two columns
-#' bag_bcd_get_data(
+#' bag_bcdc_read(
 #'   bcdata_record_id = "bc-airports",
 #'   col_extract = c("AIRPORT_NAME", "DESCRIPTION")
 #' )
 #' }
-bag_bcd_get_data <- function(bcdata_record_id,
-                             col_extract = NULL,
-                             drop_geom = FALSE,
-                             col_filter = NULL,
-                             col_filter_value = NULL) {
+bag_bcdc_read <- function(bcdata_record_id,
+                          col_extract = NULL,
+                          drop_geom = FALSE,
+                          col_filter = NULL,
+                          col_filter_value = NULL) {
 
   chk::chk_string(bcdata_record_id)
   chk::chk_flag(drop_geom)

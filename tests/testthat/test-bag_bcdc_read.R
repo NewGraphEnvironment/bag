@@ -1,5 +1,5 @@
 # bcdata::bcdc_query_geodata() and bcdata::collect() are mocked — no test here touches the
-# network. The collect() stub calls force(x) for the reason recorded in test-bag_bcdata.R:
+# network. The collect() stub calls force(x) for the reason recorded in test-bag_bcdc.R:
 # the native pipe nests the query inside collect(), so without it the query is never
 # evaluated and a spy on the record id never fires.
 
@@ -35,69 +35,69 @@ stub_bcdata <- function(f, layer = fake_layer(), on_query = NULL) {
   f
 }
 
-testthat::test_that("bag_bcd_get_data validates its arguments", {
-  testthat::expect_error(bag_bcd_get_data(1L), class = "chk_error")
-  testthat::expect_error(bag_bcd_get_data(c("a", "b")), class = "chk_error")
+testthat::test_that("bag_bcdc_read validates its arguments", {
+  testthat::expect_error(bag_bcdc_read(1L), class = "chk_error")
+  testthat::expect_error(bag_bcdc_read(c("a", "b")), class = "chk_error")
   testthat::expect_error(
-    bag_bcd_get_data("bc-airports", drop_geom = "yes"),
+    bag_bcdc_read("bc-airports", drop_geom = "yes"),
     class = "chk_error"
   )
   testthat::expect_error(
-    bag_bcd_get_data("bc-airports", col_filter = 1L, col_filter_value = "x"),
+    bag_bcdc_read("bc-airports", col_filter = 1L, col_filter_value = "x"),
     class = "chk_error"
   )
   testthat::expect_error(
-    bag_bcd_get_data("bc-airports", col_filter = "A", col_filter_value = 1L),
+    bag_bcdc_read("bc-airports", col_filter = "A", col_filter_value = 1L),
     class = "chk_error"
   )
   testthat::expect_error(
-    bag_bcd_get_data("bc-airports", col_extract = 1L),
+    bag_bcdc_read("bc-airports", col_extract = 1L),
     class = "chk_error"
   )
 })
 
-testthat::test_that("bag_bcd_get_data requires col_filter_value alongside col_filter", {
+testthat::test_that("bag_bcdc_read requires col_filter_value alongside col_filter", {
   testthat::expect_error(
-    bag_bcd_get_data("bc-airports", col_filter = "FUNDING_PROJECT_NUMBER"),
+    bag_bcdc_read("bc-airports", col_filter = "FUNDING_PROJECT_NUMBER"),
     "col_filter_value"
   )
 })
 
-testthat::test_that("bag_bcd_get_data lower-cases a record id with no period", {
+testthat::test_that("bag_bcdc_read lower-cases a record id with no period", {
   testthat::skip_if_not_installed("mockery")
 
   seen <- NULL
-  f <- stub_bcdata(bag_bcd_get_data, on_query = function(r) seen <<- r)
+  f <- stub_bcdata(bag_bcdc_read, on_query = function(r) seen <<- r)
   f("BC-Airports")
 
   testthat::expect_equal(seen, "bc-airports")
 })
 
-testthat::test_that("bag_bcd_get_data upper-cases a record id containing a period", {
+testthat::test_that("bag_bcdc_read upper-cases a record id containing a period", {
   testthat::skip_if_not_installed("mockery")
 
   seen <- NULL
-  f <- stub_bcdata(bag_bcd_get_data, on_query = function(r) seen <<- r)
+  f <- stub_bcdata(bag_bcdc_read, on_query = function(r) seen <<- r)
   f("whse_fish.pscis_assessment_svw")
 
   testthat::expect_equal(seen, "WHSE_FISH.PSCIS_ASSESSMENT_SVW")
 })
 
-testthat::test_that("bag_bcd_get_data cleans the column names", {
+testthat::test_that("bag_bcdc_read cleans the column names", {
   testthat::skip_if_not_installed("mockery")
 
-  f <- stub_bcdata(bag_bcd_get_data)
+  f <- stub_bcdata(bag_bcdc_read)
   out <- f("bc-airports")
 
   testthat::expect_true(all(c("airport_name", "description") %in% names(out)))
   testthat::expect_false("AIRPORT_NAME" %in% names(out))
 })
 
-testthat::test_that("bag_bcd_get_data keeps the geometry by default and drops it on request", {
+testthat::test_that("bag_bcdc_read keeps the geometry by default and drops it on request", {
   testthat::skip_if_not_installed("mockery")
   testthat::skip_if_not_installed("sf")
 
-  f <- stub_bcdata(bag_bcd_get_data)
+  f <- stub_bcdata(bag_bcdc_read)
 
   kept <- f("bc-airports")
   testthat::expect_s3_class(kept, "sf")
@@ -107,19 +107,19 @@ testthat::test_that("bag_bcd_get_data keeps the geometry by default and drops it
   testthat::expect_false("geometry" %in% names(dropped))
 })
 
-testthat::test_that("bag_bcd_get_data keeps only col_extract", {
+testthat::test_that("bag_bcdc_read keeps only col_extract", {
   testthat::skip_if_not_installed("mockery")
 
-  f <- stub_bcdata(bag_bcd_get_data)
+  f <- stub_bcdata(bag_bcdc_read)
   out <- f("bc-airports", col_extract = "AIRPORT_NAME", drop_geom = TRUE)
 
   testthat::expect_equal(names(out), "airport_name")
 })
 
-testthat::test_that("bag_bcd_get_data upper-cases col_extract before selecting", {
+testthat::test_that("bag_bcdc_read upper-cases col_extract before selecting", {
   testthat::skip_if_not_installed("mockery")
 
-  f <- stub_bcdata(bag_bcd_get_data)
+  f <- stub_bcdata(bag_bcdc_read)
 
   # the fixture's columns are upper case, so a lower-case argument only works if the
   # function upper-cases it first
@@ -127,7 +127,7 @@ testthat::test_that("bag_bcd_get_data upper-cases col_extract before selecting",
   testthat::expect_equal(names(out), "airport_name")
 })
 
-testthat::test_that("bag_bcd_get_data upper-cases col_filter before filtering", {
+testthat::test_that("bag_bcdc_read upper-cases col_filter before filtering", {
   testthat::skip_if_not_installed("mockery")
 
   # Capture the expression dplyr::filter is handed, not a spy on rlang::sym(). A
@@ -136,7 +136,7 @@ testthat::test_that("bag_bcd_get_data upper-cases col_filter before filtering", 
   # failed that way. The label is also the property worth pinning: what column name
   # actually reaches the filter.
   seen <- NULL
-  f <- bag_bcd_get_data
+  f <- bag_bcdc_read
   mockery::stub(f, "bcdata::bcdc_query_geodata", function(record, ...) record)
   mockery::stub(f, "dplyr::filter", function(.data, ...) {
     seen <<- vapply(rlang::enquos(...), rlang::as_label, character(1))
@@ -154,10 +154,10 @@ testthat::test_that("bag_bcd_get_data upper-cases col_filter before filtering", 
   testthat::expect_no_match(seen, "funding_project_number")
 })
 
-testthat::test_that("bag_bcd_get_data aborts on an empty result when a filter was given", {
+testthat::test_that("bag_bcdc_read aborts on an empty result when a filter was given", {
   testthat::skip_if_not_installed("mockery")
 
-  f <- stub_bcdata(bag_bcd_get_data, layer = fake_layer(0L))
+  f <- stub_bcdata(bag_bcdc_read, layer = fake_layer(0L))
 
   testthat::expect_error(
     f("bc-airports", col_filter = "A", col_filter_value = "nope"),
@@ -165,10 +165,10 @@ testthat::test_that("bag_bcd_get_data aborts on an empty result when a filter wa
   )
 })
 
-testthat::test_that("bag_bcd_get_data aborts on an empty result when col_extract was given", {
+testthat::test_that("bag_bcdc_read aborts on an empty result when col_extract was given", {
   testthat::skip_if_not_installed("mockery")
 
-  f <- stub_bcdata(bag_bcd_get_data, layer = fake_layer(0L))
+  f <- stub_bcdata(bag_bcdc_read, layer = fake_layer(0L))
 
   testthat::expect_error(
     f("bc-airports", col_extract = "AIRPORT_NAME"),
@@ -176,10 +176,10 @@ testthat::test_that("bag_bcd_get_data aborts on an empty result when col_extract
   )
 })
 
-testthat::test_that("bag_bcd_get_data returns an empty result when neither argument was given", {
+testthat::test_that("bag_bcdc_read returns an empty result when neither argument was given", {
   testthat::skip_if_not_installed("mockery")
 
-  f <- stub_bcdata(bag_bcd_get_data, layer = fake_layer(0L))
+  f <- stub_bcdata(bag_bcdc_read, layer = fake_layer(0L))
 
   # An empty layer is a fact about the layer, not a failed query, so this must NOT abort.
   # Without this the abort could be made unconditional and every other test would pass.

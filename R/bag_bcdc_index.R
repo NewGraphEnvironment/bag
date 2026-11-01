@@ -11,9 +11,9 @@
 #' @return A [tibble::tibble] with columns `object_name`, `package_name`, `url_browser`,
 #'   `description`, `id_package`, `id_dataset` and `url_download`.
 #'
-#' @seealso [bag_meta_bcd_xref_col_comments()] for the column descriptions of one layer,
-#'   and [bag_bcd_get_data()] to read a layer once its object name is known.
-#' @family metadata
+#' @seealso [bag_bcdc_cols()] for the column descriptions of one layer,
+#'   and [bag_bcdc_read()] to read a layer once its object name is known.
+#' @family catalogue
 #' @export
 #'
 #' @importFrom bcdata bcdc_search
@@ -26,10 +26,10 @@
 #'
 #' @examples
 #' \dontrun{
-#' lookup_table <- bag_meta_bcd_xref()
+#' lookup_table <- bag_bcdc_index()
 #' head(lookup_table)
 #' }
-bag_meta_bcd_xref <- function(pkg_exclude = c("bc-web-map-library")) {
+bag_bcdc_index <- function(pkg_exclude = c("bc-web-map-library")) {
 
   chk::chk_character(pkg_exclude)
 
@@ -69,7 +69,7 @@ bag_meta_bcd_xref <- function(pkg_exclude = c("bc-web-map-library")) {
   object_names <- purrr::map2_df(
     .x = bcdata_lookup_raw$package_name,
     .y = bcdata_lookup_raw$object_name_idx,
-    .f = ~ bag_meta_bcd_xref_pkg_schtab(pkg_list = l, pkg_name = .x, row_idx = .y)
+    .f = ~ .bag_bcdc_schtab(pkg_list = l, pkg_name = .x, row_idx = .y)
   ) |>
     dplyr::mutate(object_name = stringr::str_to_lower(object_name))
 

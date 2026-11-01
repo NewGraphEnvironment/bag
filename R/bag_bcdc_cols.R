@@ -12,8 +12,8 @@
 #'   R type and the catalogue's column comments. Zero rows when the column does not exist
 #'   in the layer.
 #'
-#' @seealso [bag_meta_bcd_xref()] for the layer lookup this complements.
-#' @family metadata
+#' @seealso [bag_bcdc_index()] for the layer lookup this complements.
+#' @family catalogue
 #' @export
 #'
 #' @importFrom bcdata bcdc_describe_feature
@@ -24,12 +24,12 @@
 #'
 #' @examples
 #' \dontrun{
-#' bag_meta_bcd_xref_col_comments(
+#' bag_bcdc_cols(
 #'   "whse_imagery_and_base_maps.gsr_airports_svw",
 #'   "airport_name"
 #' )
 #' }
-bag_meta_bcd_xref_col_comments <- function(schema_table, column) {
+bag_bcdc_cols <- function(schema_table, column) {
 
   chk::chk_string(schema_table)
   chk::chk_string(column)

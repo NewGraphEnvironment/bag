@@ -16,16 +16,16 @@
 #' @return An `sf` data frame in the input CRS, with the zone, easting and northing columns
 #'   assigned.
 #'
-#' @seealso [bag_sp_assign_sf_from_utm()] for the inverse, and [bag_sp_assign_latlong()] for
-#'   latitude and longitude columns.
+#' @seealso [bag_sf_from_utm()] to build an `sf` object from such columns — not an
+#'   inverse of this function, which returns the input CRS where that one returns
+#'   `crs_return` — and [bag_assign_latlong()] for latitude and longitude columns.
 #' @family coordinates
 #' @export
 #'
 #' @importFrom chk chk_string
 #' @importFrom cli cli_abort cli_warn
-#' @importFrom dplyr arrange bind_rows distinct group_by group_split mutate pull select
-#' @importFrom magrittr %>%
-#' @importFrom purrr map map2
+#' @importFrom dplyr bind_rows mutate select
+#' @importFrom purrr map
 #' @importFrom rlang := sym
 #' @importFrom sf st_coordinates st_crs st_geometry st_transform
 #'
@@ -37,15 +37,15 @@
 #' ) |>
 #'   sf::st_as_sf(coords = c("lon", "lat"), crs = 4326)
 #'
-#' bag_sp_assign_utm(dat = sf_df)
+#' bag_assign_utm(dat = sf_df)
 #' }
-bag_sp_assign_utm <- function(dat = NULL,
-                              col_zone = "utm_zone",
-                              col_easting = "easting",
-                              col_northing = "northing",
-                              sig_dig = 0) {
+bag_assign_utm <- function(dat = NULL,
+                           col_zone = "utm_zone",
+                           col_easting = "easting",
+                           col_northing = "northing",
+                           sig_dig = 0) {
 
-  bag_chk_sf_point(dat)
+  .bag_chk_sf_point(dat)
   chk::chk_string(col_zone)
   chk::chk_string(col_easting)
   chk::chk_string(col_northing)
@@ -62,37 +62,36 @@ bag_sp_assign_utm <- function(dat = NULL,
 
   crs_og <- sf::st_crs(dat, parameters = TRUE)$epsg
 
-  # The pipelines below are the donor's, unchanged. They use magrittr's `.` placeholder
-  # inside dplyr::mutate(), which the native pipe has no equivalent for, and their row
-  # ordering and CRS round trip are relied on by the files ~20 call sites write back. A
-  # rewrite is where a regression would come from, so the import is declared instead.
-  dat2 <- dat %>%
-    sf::st_transform(crs = 4326) %>%
+  # Longitude is read once, off the WGS 84 copy, and injected with `!!` so a column of the
+  # same name cannot shadow the local vector inside mutate(). The donor read it into a
+  # `long` column and selected it back out.
+  dat_wgs <- sf::st_transform(dat, crs = 4326)
+  lon <- sf::st_coordinates(dat_wgs)[, 1]
+
+  dat2 <- dat_wgs |>
     dplyr::mutate(
-      long = sf::st_coordinates(.)[, 1]
-    ) %>%
-    dplyr::mutate({{ col_zone }} := floor((long + 180) / 6) + 1) %>%
-    dplyr::mutate(epsg = 26900 + !!rlang::sym(col_zone)) %>%
-    dplyr::arrange(epsg) %>%
-    dplyr::select(-long)
+      {{ col_zone }} := floor((!!lon + 180) / 6) + 1,
+      epsg = 26900 + !!rlang::sym(col_zone)
+    )
 
-  crs_l <- dat2 %>%
-    dplyr::distinct(epsg) %>%
-    dplyr::pull(epsg)
+  # One pass per zone, keyed on the sorted zone values themselves. The donor paired a
+  # group_split() with a separately derived CRS vector and relied on the two coming out in
+  # the same order -- an invariant held together by a comment, which needed an
+  # arrange(epsg) above to hold. Here each pass carries the CRS it transforms to, and the
+  # sorted keys are what put the rows back in zone order, so neither is needed.
+  out_l <- purrr::map(unique(sort(dat2[["epsg"]])), function(epsg_zone) {
+    grp <- sf::st_transform(dat2[dat2[["epsg"]] == epsg_zone, ], crs = epsg_zone)
+    xy <- sf::st_coordinates(grp)
 
-  # Grouped by the same key the frame was sorted on, so the group order matches crs_l.
-  form_l <- dat2 %>%
-    dplyr::group_by(epsg) %>%
-    dplyr::group_split()
+    grp |>
+      dplyr::mutate(
+        {{ col_easting }} := round(!!xy[, 1], sig_dig),
+        {{ col_northing }} := round(!!xy[, 2], sig_dig)
+      ) |>
+      sf::st_transform(crs = crs_og)
+  })
 
-  form_l %>%
-    purrr::map2(crs_l, sf::st_transform) %>%
-    purrr::map(~ dplyr::mutate(
-      .,
-      {{ col_easting }} := round(sf::st_coordinates(.)[, 1], sig_dig),
-      {{ col_northing }} := round(sf::st_coordinates(.)[, 2], sig_dig)
-    )) %>%
-    purrr::map(sf::st_transform, crs = crs_og) %>%
-    dplyr::bind_rows() %>%
+  out_l |>
+    dplyr::bind_rows() |>
     dplyr::select(-epsg)
 }

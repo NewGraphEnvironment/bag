@@ -14,64 +14,64 @@ three_zones <- function(crs = 4326) {
   d
 }
 
-testthat::test_that("bag_sp_assign_utm rejects input that is not sf POINT", {
+testthat::test_that("bag_assign_utm rejects input that is not sf POINT", {
   testthat::skip_if_not_installed("sf")
 
-  testthat::expect_error(bag_sp_assign_utm(NULL), "not NULL")
-  testthat::expect_error(bag_sp_assign_utm(data.frame(a = 1)), "sf")
+  testthat::expect_error(bag_assign_utm(NULL), "not NULL")
+  testthat::expect_error(bag_assign_utm(data.frame(a = 1)), "sf")
 })
 
-testthat::test_that("bag_sp_assign_utm validates the column name arguments", {
+testthat::test_that("bag_assign_utm validates the column name arguments", {
   testthat::skip_if_not_installed("sf")
   d <- three_zones()
 
-  testthat::expect_error(bag_sp_assign_utm(d, col_zone = 1L), class = "chk_error")
-  testthat::expect_error(bag_sp_assign_utm(d, col_easting = 1L), class = "chk_error")
-  testthat::expect_error(bag_sp_assign_utm(d, col_northing = 1L), class = "chk_error")
+  testthat::expect_error(bag_assign_utm(d, col_zone = 1L), class = "chk_error")
+  testthat::expect_error(bag_assign_utm(d, col_easting = 1L), class = "chk_error")
+  testthat::expect_error(bag_assign_utm(d, col_northing = 1L), class = "chk_error")
 })
 
-testthat::test_that("bag_sp_assign_utm assigns the three columns", {
+testthat::test_that("bag_assign_utm assigns the three columns", {
   testthat::skip_if_not_installed("sf")
 
-  out <- suppressWarnings(bag_sp_assign_utm(three_zones()))
+  out <- suppressWarnings(bag_assign_utm(three_zones()))
 
   testthat::expect_true(all(c("utm_zone", "easting", "northing") %in% names(out)))
   testthat::expect_equal(nrow(out), 3L)
 })
 
-testthat::test_that("bag_sp_assign_utm derives the zone from longitude", {
+testthat::test_that("bag_assign_utm derives the zone from longitude", {
   testthat::skip_if_not_installed("sf")
 
-  out <- suppressWarnings(bag_sp_assign_utm(three_zones()))
+  out <- suppressWarnings(bag_assign_utm(three_zones()))
 
   testthat::expect_equal(out$utm_zone[out$site == "z9"], 9)
   testthat::expect_equal(out$utm_zone[out$site == "z10"], 10)
   testthat::expect_equal(out$utm_zone[out$site == "z11"], 11)
 })
 
-testthat::test_that("bag_sp_assign_utm gives each zone its own easting, not one shared CRS", {
+testthat::test_that("bag_assign_utm gives each zone its own easting, not one shared CRS", {
   testthat::skip_if_not_installed("sf")
 
-  out <- suppressWarnings(bag_sp_assign_utm(three_zones()))
+  out <- suppressWarnings(bag_assign_utm(three_zones()))
 
   # A UTM easting sits within the zone's own band; all three being near each other is the
   # tell that one CRS was applied to every point.
   testthat::expect_true(all(out$easting > 100000 & out$easting < 900000))
 })
 
-testthat::test_that("bag_sp_assign_utm returns the input CRS, not the UTM one", {
+testthat::test_that("bag_assign_utm returns the input CRS, not the UTM one", {
   testthat::skip_if_not_installed("sf")
 
   for (crs in c(4326, 3005)) {
-    out <- suppressWarnings(bag_sp_assign_utm(three_zones(crs)))
+    out <- suppressWarnings(bag_assign_utm(three_zones(crs)))
     testthat::expect_equal(sf::st_crs(out)$epsg, crs)
   }
 })
 
-testthat::test_that("bag_sp_assign_utm honours custom column names", {
+testthat::test_that("bag_assign_utm honours custom column names", {
   testthat::skip_if_not_installed("sf")
 
-  out <- suppressWarnings(bag_sp_assign_utm(
+  out <- suppressWarnings(bag_assign_utm(
     three_zones(),
     col_zone = "zone_utm", col_easting = "utm_easting", col_northing = "utm_northing"
   ))
@@ -80,32 +80,32 @@ testthat::test_that("bag_sp_assign_utm honours custom column names", {
   testthat::expect_false("easting" %in% names(out))
 })
 
-testthat::test_that("bag_sp_assign_utm rounds to sig_dig", {
+testthat::test_that("bag_assign_utm rounds to sig_dig", {
   testthat::skip_if_not_installed("sf")
 
-  rounded <- suppressWarnings(bag_sp_assign_utm(three_zones(), sig_dig = 0))
-  finer <- suppressWarnings(bag_sp_assign_utm(three_zones(), sig_dig = 3))
+  rounded <- suppressWarnings(bag_assign_utm(three_zones(), sig_dig = 0))
+  finer <- suppressWarnings(bag_assign_utm(three_zones(), sig_dig = 3))
 
   testthat::expect_equal(rounded$easting, round(rounded$easting, 0))
   # at three decimals at least one value should differ from its whole number
   testthat::expect_false(isTRUE(all.equal(finer$easting, round(finer$easting, 0))))
 })
 
-testthat::test_that("bag_sp_assign_utm returns rows ordered by zone", {
+testthat::test_that("bag_assign_utm returns rows ordered by zone", {
   testthat::skip_if_not_installed("sf")
 
   # The donor sorts by zone and the files its callers write back carry that order, so a
   # change here would churn every one of them.
   shuffled <- three_zones()[c(3, 1, 2), ]
-  out <- suppressWarnings(bag_sp_assign_utm(shuffled))
+  out <- suppressWarnings(bag_assign_utm(shuffled))
 
   testthat::expect_equal(out$utm_zone, sort(out$utm_zone))
 })
 
-testthat::test_that("bag_sp_assign_utm warns when the coordinate columns are absent", {
+testthat::test_that("bag_assign_utm warns when the coordinate columns are absent", {
   testthat::skip_if_not_installed("sf")
 
-  w <- testthat::expect_warning(bag_sp_assign_utm(three_zones()))
+  w <- testthat::expect_warning(bag_assign_utm(three_zones()))
   # Both the argument name and the value it holds: matching only the interpolated value
   # cannot see whether the message still says which argument is meant, and matching only
   # the argument name broke silently when the message was reworded for line length.
@@ -113,7 +113,7 @@ testthat::test_that("bag_sp_assign_utm warns when the coordinate columns are abs
   testthat::expect_match(conditionMessage(w), "easting")
 })
 
-testthat::test_that("bag_sp_assign_utm stays quiet when the coordinate columns exist", {
+testthat::test_that("bag_assign_utm stays quiet when the coordinate columns exist", {
   testthat::skip_if_not_installed("sf")
 
   d <- three_zones()
@@ -121,34 +121,37 @@ testthat::test_that("bag_sp_assign_utm stays quiet when the coordinate columns e
   d$northing <- 0
 
   # Guard against the warning firing unconditionally, which the test above cannot see.
-  testthat::expect_no_warning(bag_sp_assign_utm(d))
+  testthat::expect_no_warning(bag_assign_utm(d))
 })
 
-testthat::test_that("bag_sp_assign_utm drops its working columns", {
+testthat::test_that("bag_assign_utm drops its working columns", {
   testthat::skip_if_not_installed("sf")
 
-  out <- suppressWarnings(bag_sp_assign_utm(three_zones()))
+  out <- suppressWarnings(bag_assign_utm(three_zones()))
 
+  # `epsg` is still a working column and is still selected out. `long` was one before the
+  # magrittr removal, which reads longitude into a local vector instead of a column, so
+  # that assertion now pins the output contract rather than a removal step.
   testthat::expect_false("epsg" %in% names(out))
   testthat::expect_false("long" %in% names(out))
 })
 
-testthat::test_that("bag_sp_assign_utm returns its columns in a fixed order", {
+testthat::test_that("bag_assign_utm returns its columns in a fixed order", {
   testthat::skip_if_not_installed("sf")
 
   # Exact order, not set membership. Every other column assertion in this file uses
   # `%in% names()`, which cannot see a reordering -- and callers write these columns
   # straight to disk, so the order is part of the output format, not cosmetics. Here the
-  # three new columns land BEFORE the geometry column, which the donor's trailing
-  # dplyr::select() calls are what produce.
-  out <- suppressWarnings(bag_sp_assign_utm(three_zones()))
+  # three new columns land BEFORE the geometry column, which the trailing
+  # dplyr::select(-epsg) is what produces.
+  out <- suppressWarnings(bag_assign_utm(three_zones()))
   testthat::expect_equal(
     names(out),
     c("site", "utm_zone", "easting", "northing", "geometry")
   )
 
   # And with renamed columns, so the assertion pins positions rather than literal names.
-  renamed <- suppressWarnings(bag_sp_assign_utm(
+  renamed <- suppressWarnings(bag_assign_utm(
     three_zones(),
     col_zone = "zone_utm", col_easting = "utm_easting", col_northing = "utm_northing"
   ))
@@ -156,4 +159,23 @@ testthat::test_that("bag_sp_assign_utm returns its columns in a fixed order", {
     names(renamed),
     c("site", "zone_utm", "utm_easting", "utm_northing", "geometry")
   )
+})
+
+testthat::test_that("bag_assign_utm is not shadowed by columns named like its locals", {
+  testthat::skip_if_not_installed("sf")
+
+  # Longitude and the per-zone coordinates are read into locals `lon` and `xy` and
+  # injected with `!!`. A bare name inside a data-masked verb resolves to a COLUMN of
+  # that name first, so without the injection a caller's own `lon` column would drive the
+  # zone arithmetic. The decoys below all sit in zone 11 if they were believed.
+  d <- three_zones()
+  d$lon <- c(-115, -115, -115)
+  d$xy <- matrix(rep(-1, 6), ncol = 2)
+
+  out <- suppressWarnings(bag_assign_utm(d))
+  reference <- suppressWarnings(bag_assign_utm(three_zones()))
+
+  testthat::expect_equal(out$utm_zone, reference$utm_zone)
+  testthat::expect_equal(out$easting, reference$easting)
+  testthat::expect_equal(out$northing, reference$northing)
 })

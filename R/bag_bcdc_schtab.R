@@ -1,6 +1,6 @@
 #' Cross reference a BC Data Catalogue package name with its object name
 #'
-#' Internal. Helper used by [bag_meta_bcd_xref()] to drill through one catalogue package and
+#' Internal. Helper used by [bag_bcdc_index()] to drill through one catalogue package and
 #' pull the `object_name` out of its `resources` list at a given row index. The index is the
 #' row of the package's `resource_df` that holds the WMS resource, because a package can
 #' hold several datasets and only the WMS one has the `schema.table` a download needs.
@@ -18,7 +18,7 @@
 #' @importFrom purrr pluck
 #' @importFrom tibble tibble
 #' @noRd
-bag_meta_bcd_xref_pkg_schtab <- function(pkg_list = NULL, pkg_name = NULL, row_idx = NULL) {
+.bag_bcdc_schtab <- function(pkg_list = NULL, pkg_name = NULL, row_idx = NULL) {
   ob_name <- pkg_list |>
     purrr::pluck(pkg_name) |>
     purrr::pluck("resources") |>
@@ -26,7 +26,7 @@ bag_meta_bcd_xref_pkg_schtab <- function(pkg_list = NULL, pkg_name = NULL, row_i
     purrr::pluck("object_name")
 
   # pluck() returns NULL for a missing element, and tibble() drops a NULL column rather
-  # than erroring -- so this row comes back 1x1. bind_rows() in bag_meta_bcd_xref() then
+  # than erroring -- so this row comes back 1x1. bind_rows() in bag_bcdc_index() then
   # NA-fills it, which is why the gap has never shown. It only bites when EVERY package
   # lacks object_name: bind_rows() yields no such column at all, and the mutate() that
   # lower-cases it fails with "object 'object_name' not found". Carrying NA keeps the

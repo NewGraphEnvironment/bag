@@ -17,27 +17,28 @@
 #'
 #' @return An `sf` data frame in `crs_return`, ordered by UTM zone.
 #'
-#' @seealso [bag_sp_assign_utm()] for the inverse.
+#' @seealso [bag_assign_utm()] to write those columns onto an `sf` object. The two are
+#'   not inverses: that one returns its input's CRS and keeps the `geometry` column, this
+#'   one returns `crs_return` and names the geometry column `geom`.
 #' @family coordinates
 #' @export
 #'
 #' @importFrom chk chk_numeric chk_string
 #' @importFrom cli cli_abort
 #' @importFrom dplyr arrange bind_rows group_split
-#' @importFrom magrittr %>%
 #' @importFrom purrr map
 #' @importFrom rlang sym
 #' @importFrom sf st_as_sf st_transform
 #'
 #' @examples
 #' \dontrun{
-#' bag_sp_assign_sf_from_utm(pscis_all)
+#' bag_sf_from_utm(pscis_all)
 #' }
-bag_sp_assign_sf_from_utm <- function(dat = NULL,
-                                      col_utm_zone = "utm_zone",
-                                      col_easting = "easting",
-                                      col_northing = "northing",
-                                      crs_return = 3005) {
+bag_sf_from_utm <- function(dat = NULL,
+                            col_utm_zone = "utm_zone",
+                            col_easting = "easting",
+                            col_northing = "northing",
+                            crs_return = 3005) {
 
   if (is.null(dat)) {
     cli::cli_abort("{.arg dat} must be a data frame, not NULL.")
@@ -55,17 +56,18 @@ bag_sp_assign_sf_from_utm <- function(dat = NULL,
   # and `northing` don't exist"), so the guard changed nothing a caller could observe --
   # a mutation test could not tell the two apart. The tests below pin that reporting.
 
-  # The donor's pipeline, unchanged.
-  dat %>%
-    dplyr::arrange(!!rlang::sym(col_utm_zone)) %>%
-    dplyr::group_split(!!rlang::sym(col_utm_zone)) %>%
+  # The donor's pipeline. Its `.x` is purrr's lambda argument, not magrittr's placeholder,
+  # so the native pipe carries it unchanged.
+  dat |>
+    dplyr::arrange(!!rlang::sym(col_utm_zone)) |>
+    dplyr::group_split(!!rlang::sym(col_utm_zone)) |>
     purrr::map(~ sf::st_as_sf(
       .x,
       coords = c(col_easting, col_northing),
       crs = 26900 + unique(.x[[col_utm_zone]]),
       remove = FALSE,
       sf_column_name = "geom"
-    )) %>%
-    purrr::map(sf::st_transform, crs = crs_return) %>%
+    )) |>
+    purrr::map(sf::st_transform, crs = crs_return) |>
     dplyr::bind_rows()
 }

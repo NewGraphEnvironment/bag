@@ -14,37 +14,37 @@ seed_point_gpkg <- function(n = 3) {
   path
 }
 
-testthat::test_that("bag_sp_gpkg_backup validates its arguments", {
+testthat::test_that("bag_gpkg_refresh validates its arguments", {
   testthat::skip_if_not_installed("sf")
   path <- seed_point_gpkg()
   on.exit(unlink(dirname(path), recursive = TRUE), add = TRUE)
 
-  testthat::expect_error(bag_sp_gpkg_backup(NULL), class = "chk_error")
-  testthat::expect_error(bag_sp_gpkg_backup(tempfile(fileext = ".gpkg")), class = "chk_error")
-  testthat::expect_error(bag_sp_gpkg_backup(path, dir_backup = 1L), class = "chk_error")
-  testthat::expect_error(bag_sp_gpkg_backup(path, update_utm = "yes"), class = "chk_error")
-  testthat::expect_error(bag_sp_gpkg_backup(path, fn_site_id = "nope"), class = "chk_error")
+  testthat::expect_error(bag_gpkg_refresh(NULL), class = "chk_error")
+  testthat::expect_error(bag_gpkg_refresh(tempfile(fileext = ".gpkg")), class = "chk_error")
+  testthat::expect_error(bag_gpkg_refresh(path, dir_backup = 1L), class = "chk_error")
+  testthat::expect_error(bag_gpkg_refresh(path, update_utm = "yes"), class = "chk_error")
+  testthat::expect_error(bag_gpkg_refresh(path, fn_site_id = "nope"), class = "chk_error")
 })
 
-testthat::test_that("bag_sp_gpkg_backup writes a csv and an RData backup", {
+testthat::test_that("bag_gpkg_refresh writes a csv and an RData backup", {
   testthat::skip_if_not_installed("sf")
   path <- seed_point_gpkg()
   dir_backup <- tempfile("bk_")
   on.exit(unlink(c(dirname(path), dir_backup), recursive = TRUE), add = TRUE)
 
-  suppressWarnings(bag_sp_gpkg_backup(path, dir_backup = dir_backup))
+  suppressWarnings(bag_gpkg_refresh(path, dir_backup = dir_backup))
 
   testthat::expect_true(file.exists(fs::path(dir_backup, "form_fiss_site_2026.csv")))
   testthat::expect_true(file.exists(fs::path(dir_backup, "form_fiss_site_2026.RData")))
 })
 
-testthat::test_that("bag_sp_gpkg_backup names the RData object for the GeoPackage", {
+testthat::test_that("bag_gpkg_refresh names the RData object for the GeoPackage", {
   testthat::skip_if_not_installed("sf")
   path <- seed_point_gpkg()
   dir_backup <- tempfile("bk_")
   on.exit(unlink(c(dirname(path), dir_backup), recursive = TRUE), add = TRUE)
 
-  suppressWarnings(bag_sp_gpkg_backup(path, dir_backup = dir_backup))
+  suppressWarnings(bag_gpkg_refresh(path, dir_backup = dir_backup))
 
   e <- new.env()
   load(fs::path(dir_backup, "form_fiss_site_2026.RData"), envir = e)
@@ -52,13 +52,13 @@ testthat::test_that("bag_sp_gpkg_backup names the RData object for the GeoPackag
   testthat::expect_s3_class(get("form_fiss_site_2026", envir = e), "sf")
 })
 
-testthat::test_that("bag_sp_gpkg_backup drops the geometry from the csv", {
+testthat::test_that("bag_gpkg_refresh drops the geometry from the csv", {
   testthat::skip_if_not_installed("sf")
   path <- seed_point_gpkg()
   dir_backup <- tempfile("bk_")
   on.exit(unlink(c(dirname(path), dir_backup), recursive = TRUE), add = TRUE)
 
-  suppressWarnings(bag_sp_gpkg_backup(path, dir_backup = dir_backup))
+  suppressWarnings(bag_gpkg_refresh(path, dir_backup = dir_backup))
   csv <- utils::read.csv(fs::path(dir_backup, "form_fiss_site_2026.csv"))
 
   testthat::expect_false("geom" %in% names(csv))
@@ -66,7 +66,7 @@ testthat::test_that("bag_sp_gpkg_backup drops the geometry from the csv", {
   testthat::expect_true("site" %in% names(csv))
 })
 
-testthat::test_that("bag_sp_gpkg_backup creates dir_backup when only RData is written", {
+testthat::test_that("bag_gpkg_refresh creates dir_backup when only RData is written", {
   testthat::skip_if_not_installed("sf")
   path <- seed_point_gpkg()
   dir_backup <- tempfile("bk_")
@@ -75,46 +75,46 @@ testthat::test_that("bag_sp_gpkg_backup creates dir_backup when only RData is wr
   # The donor created dir_backup inside the csv branch only, so this combination failed on
   # a directory that did not exist yet.
   testthat::expect_no_error(
-    suppressWarnings(bag_sp_gpkg_backup(
+    suppressWarnings(bag_gpkg_refresh(
       path, dir_backup = dir_backup, write_to_csv = FALSE, write_to_rdata = TRUE
     ))
   )
   testthat::expect_true(file.exists(fs::path(dir_backup, "form_fiss_site_2026.RData")))
 })
 
-testthat::test_that("bag_sp_gpkg_backup refreshes the UTM columns when asked", {
+testthat::test_that("bag_gpkg_refresh refreshes the UTM columns when asked", {
   testthat::skip_if_not_installed("sf")
   path <- seed_point_gpkg()
   dir_backup <- tempfile("bk_")
   on.exit(unlink(c(dirname(path), dir_backup), recursive = TRUE), add = TRUE)
 
-  out <- suppressWarnings(bag_sp_gpkg_backup(
+  out <- suppressWarnings(bag_gpkg_refresh(
     path, dir_backup = dir_backup, update_utm = TRUE, return_object = TRUE
   ))
 
   testthat::expect_true(all(c("utm_zone", "easting", "northing") %in% names(out)))
 })
 
-testthat::test_that("bag_sp_gpkg_backup leaves the columns alone when update_utm is FALSE", {
+testthat::test_that("bag_gpkg_refresh leaves the columns alone when update_utm is FALSE", {
   testthat::skip_if_not_installed("sf")
   path <- seed_point_gpkg()
   dir_backup <- tempfile("bk_")
   on.exit(unlink(c(dirname(path), dir_backup), recursive = TRUE), add = TRUE)
 
-  out <- bag_sp_gpkg_backup(
+  out <- bag_gpkg_refresh(
     path, dir_backup = dir_backup, update_utm = FALSE, return_object = TRUE
   )
 
   testthat::expect_false("utm_zone" %in% names(out))
 })
 
-testthat::test_that("bag_sp_gpkg_backup passes ... through to bag_sp_assign_utm", {
+testthat::test_that("bag_gpkg_refresh passes ... through to bag_assign_utm", {
   testthat::skip_if_not_installed("sf")
   path <- seed_point_gpkg()
   dir_backup <- tempfile("bk_")
   on.exit(unlink(c(dirname(path), dir_backup), recursive = TRUE), add = TRUE)
 
-  out <- suppressWarnings(bag_sp_gpkg_backup(
+  out <- suppressWarnings(bag_gpkg_refresh(
     path, dir_backup = dir_backup, return_object = TRUE,
     col_easting = "utm_easting", col_northing = "utm_northing"
   ))
@@ -122,7 +122,7 @@ testthat::test_that("bag_sp_gpkg_backup passes ... through to bag_sp_assign_utm"
   testthat::expect_true(all(c("utm_easting", "utm_northing") %in% names(out)))
 })
 
-testthat::test_that("bag_sp_gpkg_backup applies fn_site_id when given one", {
+testthat::test_that("bag_gpkg_refresh applies fn_site_id when given one", {
   testthat::skip_if_not_installed("sf")
   path <- seed_point_gpkg()
   dir_backup <- tempfile("bk_")
@@ -135,7 +135,7 @@ testthat::test_that("bag_sp_gpkg_backup applies fn_site_id when given one", {
     d
   }
 
-  out <- suppressWarnings(bag_sp_gpkg_backup(
+  out <- suppressWarnings(bag_gpkg_refresh(
     path, dir_backup = dir_backup, fn_site_id = tagged, return_object = TRUE
   ))
 
@@ -143,20 +143,20 @@ testthat::test_that("bag_sp_gpkg_backup applies fn_site_id when given one", {
   testthat::expect_true(all(grepl("^id_", out$site_id)))
 })
 
-testthat::test_that("bag_sp_gpkg_backup applies nothing when fn_site_id is NULL", {
+testthat::test_that("bag_gpkg_refresh applies nothing when fn_site_id is NULL", {
   testthat::skip_if_not_installed("sf")
   path <- seed_point_gpkg()
   dir_backup <- tempfile("bk_")
   on.exit(unlink(c(dirname(path), dir_backup), recursive = TRUE), add = TRUE)
 
-  out <- suppressWarnings(bag_sp_gpkg_backup(
+  out <- suppressWarnings(bag_gpkg_refresh(
     path, dir_backup = dir_backup, return_object = TRUE
   ))
 
   testthat::expect_false("site_id" %in% names(out))
 })
 
-testthat::test_that("bag_sp_gpkg_backup rejects an fn_site_id that breaks the object", {
+testthat::test_that("bag_gpkg_refresh rejects an fn_site_id that breaks the object", {
   testthat::skip_if_not_installed("sf")
   path <- seed_point_gpkg()
   dir_backup <- tempfile("bk_")
@@ -164,49 +164,49 @@ testthat::test_that("bag_sp_gpkg_backup rejects an fn_site_id that breaks the ob
 
   # A callback returning the wrong shape would otherwise be written to disk.
   testthat::expect_error(
-    suppressWarnings(bag_sp_gpkg_backup(
+    suppressWarnings(bag_gpkg_refresh(
       path, dir_backup = dir_backup, fn_site_id = function(d) sf::st_drop_geometry(d)
     )),
     "fn_site_id"
   )
 })
 
-testthat::test_that("bag_sp_gpkg_backup leaves the GeoPackage alone by default", {
+testthat::test_that("bag_gpkg_refresh leaves the GeoPackage alone by default", {
   testthat::skip_if_not_installed("sf")
   path <- seed_point_gpkg()
   dir_backup <- tempfile("bk_")
   on.exit(unlink(c(dirname(path), dir_backup), recursive = TRUE), add = TRUE)
 
   before <- names(sf::st_read(path, quiet = TRUE))
-  suppressWarnings(bag_sp_gpkg_backup(path, dir_backup = dir_backup))
+  suppressWarnings(bag_gpkg_refresh(path, dir_backup = dir_backup))
 
   testthat::expect_equal(names(sf::st_read(path, quiet = TRUE)), before)
 })
 
-testthat::test_that("bag_sp_gpkg_backup writes back when write_back_to_path is TRUE", {
+testthat::test_that("bag_gpkg_refresh writes back when write_back_to_path is TRUE", {
   testthat::skip_if_not_installed("sf")
   path <- seed_point_gpkg()
   dir_backup <- tempfile("bk_")
   on.exit(unlink(c(dirname(path), dir_backup), recursive = TRUE), add = TRUE)
 
-  suppressWarnings(bag_sp_gpkg_backup(
+  suppressWarnings(bag_gpkg_refresh(
     path, dir_backup = dir_backup, write_back_to_path = TRUE
   ))
 
   testthat::expect_true("utm_zone" %in% names(sf::st_read(path, quiet = TRUE)))
 })
 
-testthat::test_that("bag_sp_gpkg_backup returns nothing unless asked", {
+testthat::test_that("bag_gpkg_refresh returns nothing unless asked", {
   testthat::skip_if_not_installed("sf")
   path <- seed_point_gpkg()
   dir_backup <- tempfile("bk_")
   on.exit(unlink(c(dirname(path), dir_backup), recursive = TRUE), add = TRUE)
 
-  out <- suppressWarnings(bag_sp_gpkg_backup(path, dir_backup = dir_backup))
+  out <- suppressWarnings(bag_gpkg_refresh(path, dir_backup = dir_backup))
   testthat::expect_null(out)
 })
 
-testthat::test_that("bag_sp_gpkg_backup rejects a GeoPackage that is not points", {
+testthat::test_that("bag_gpkg_refresh rejects a GeoPackage that is not points", {
   testthat::skip_if_not_installed("sf")
 
   dir <- tempfile("poly_")
@@ -220,5 +220,5 @@ testthat::test_that("bag_sp_gpkg_backup rejects a GeoPackage that is not points"
   )
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
 
-  testthat::expect_error(bag_sp_gpkg_backup(path), "POINT geometry")
+  testthat::expect_error(bag_gpkg_refresh(path), "POINT geometry")
 })

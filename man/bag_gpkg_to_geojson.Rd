@@ -31,12 +31,11 @@ bag_gpkg_to_geojson(
 }
 }
 \seealso{
-\code{\link[=bag_layer_info]{bag_layer_info()}} for listing a data source's layers and geometry types.
+\code{\link[=bag_layers]{bag_layers()}} for listing a data source's layers and geometry types.
 
 Other files: 
-\code{\link{bag_fs_backup}()},
-\code{\link{bag_gpx_import}()},
-\code{\link{bag_layer_info}()},
-\code{\link{bag_sp_gpkg_backup}()}
+\code{\link{bag_backup}()},
+\code{\link{bag_gpkg_refresh}()},
+\code{\link{bag_layers}()}
 }
 \concept{files}

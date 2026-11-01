@@ -30,7 +30,7 @@
 #' purrr::walk2(
 #'   .x = get_this,
 #'   .y = name_this,
-#'   .f = ~ bag_bcdata(
+#'   .f = ~ bag_bcdc(
 #'     bcdata_record_id = .x,
 #'     path_gpkg = path_gpkg,
 #'     layer_name = .y
@@ -38,13 +38,13 @@
 #' )
 #' }
 #'
-#' @family download
+#' @family catalogue
 #' @export
 #' @importFrom bcdata bcdc_query_geodata collect filter INTERSECTS
 #' @importFrom sf st_geometry st_transform st_intersection st_write
 #' @importFrom stringr str_to_lower str_to_upper
 #' @importFrom chk chk_string chk_file
-bag_bcdata <- function(
+bag_bcdc <- function(
     bcdata_record_id = NULL,
     path_gpkg = NULL,
     mask = NULL,

@@ -36,7 +36,6 @@ Imports:
     httr2,
     janitor,
     lubridate,
-    magrittr,
     purrr,
     readr,
     rlang,

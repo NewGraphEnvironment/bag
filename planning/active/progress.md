@@ -198,3 +198,42 @@
 - Next: Phase 9's rename with the magrittr removal folded in, then `/code-check branch`.
   Phase 1 — the repository rename — is still with the owner, and 4b, 7 and 8 remain
   blocked on it
+
+## Session 2026-11-01 (UTC) — the Phase 9 rename and the magrittr removal, in one pass
+
+- Both phases done per file so each was opened once, as Phase 11 asked. Ten exports and
+  two internals renamed, 305 symbol substitutions across `R/`, `tests/`, `_pkgdown.yml`
+  and `.lintr`, in one alternation pass whose pattern refuses a name that already carries
+  a leading dot — so the two new internals cannot become `..bag_*` on a re-run
+- The four `@family` tags were reassigned to reach the counts the plan stated as totals
+  but never per function. `bag_bcdc` moved download → catalogue (the rename table's own
+  reason for the name is "one stem for the catalogue family"), and `bag_gpx_import` moved
+  files → download, which is what makes download three. It is the only one of the five
+  file helpers that brings data in from outside the project, and its pkgdown section is
+  titled "Fetch" — the package `Title` is "Fetch Public Data **and Field Files** to Disk"
+- **`dplyr::arrange(epsg)` was dead after the rewrite and came out.** It existed so a
+  `group_split()`'s group order would agree with a separately derived CRS vector. With one
+  pass per sorted zone key there is nothing to keep in step. A mutation test is what found
+  it: deleting the `arrange` left the row-order test **green**. Reversing the loop keys
+  takes it red, so the invariant is still pinned — by the loop now, not by a prior sort
+- **Two tests added for the trap the `!!` injection exists to close.** Nothing in the
+  suite could tell `!!xy[, 1]` from a bare `xy[, 1]`, so the stated reason for the
+  injection was unpinned. Each test hands the function a decoy column named like the local
+  it injects (`xy`, and `lon` for the zone arithmetic) and asserts the coordinates still
+  come off the geometry. Dropping the five `!!` marks takes 5 assertions red
+- Two `@seealso` lines said `bag_assign_utm` and `bag_sf_from_utm` are inverses. Phase 9
+  measured that they are not — different returned CRS, different geometry column name —
+  so both now say so, and `bag_gpkg_refresh`'s title leads with the refresh rather than
+  the backups, because `write_back_to_path = TRUE` overwrites its source
+- `.` and `long` came out of `globalVariables()` with the pipelines that needed them; the
+  four per-file `pipe_consistency_linter` exclusions came out of `.lintr` with magrittr,
+  leaving only the `renv` entry. `Imports:` 16 to 15
+- Signature continuation lines were re-indented to the shorter names. The re-indenter
+  flattened a nested `c()` inside `bag_gpx_import`'s signature — a file whose name did not
+  change and so had nothing to fix — and that was reverted rather than left
+- `devtools::test()`: FAIL 0 | WARN 0 | SKIP 2 | PASS 303, up from 298 (the five new
+  assertions). `lintr::lint_package()`: 0. `check(vignettes = FALSE)`: 0 errors, 0
+  warnings, 0 notes. `pkgdown::check_pkgdown()` clean in a copy with the URLs made
+  consistent, so the renamed `catalogue` concept still reaches every export
+- Next: `/code-check branch`. Phase 1 — the repository rename — is still with the owner,
+  and 4b, 7's release and 8 remain blocked on it

@@ -32,7 +32,7 @@
 #' @importFrom cli cli_abort
 #' @importFrom sf st_geometry
 #' @noRd
-bag_chk_sf_point <- function(dat, arg = "dat") {
+.bag_chk_sf_point <- function(dat, arg = "dat") {
   if (is.null(dat)) {
     cli::cli_abort("{.arg {arg}} must be an sf data frame of POINT geometry, not NULL.")
   }

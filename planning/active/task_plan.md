@@ -294,10 +294,14 @@ Reprefix only, per the gate: the donor stems are kept and only the prefix change
       codes, `tar` failed, and the `||` arm reported "none leaked". Re-run with `find` and a
       non-zero entry count asserted first
 - [x] Counts agree: 15 `export()` lines, 15 `man/*.Rd`, 16 test files (one per export plus
-      the internal guard), 18 `R/*.R` (15 exports, two internal helpers, `utils.R`)
+      the internal guard), 18 `R/*.R` (15 exports, two internal helpers, `utils.R`).
+      Re-measured after Phase 10's drop and Phase 9's rename: **14** exports, 14
+      `man/*.Rd`, 15 test files, 17 `R/*.R`
 - [ ] `pkgdown::check_pkgdown()` — **blocked on 4b.** Verified clean in a copy of the tree
       with the two URLs made consistent, so the reference index covers every topic and the
-      URL is the only thing outstanding
+      URL is the only thing outstanding. Re-verified the same way after Phase 9 renamed
+      the `metadata` concept to `catalogue` and moved two functions between families:
+      "No problems found", so all 14 exports are still reached by the four groups
 - [ ] Release `bag 0.5.0` as the final commit of the branch, tag, GitHub release —
       **blocked on 4b**, which is blocked on Phase 1
 
@@ -336,7 +340,7 @@ Twice during review a name was shortened and lost contract information: `bag_utm
 `bag_utm_to_sf` read as either direction, and `bag_geojson` dropped a conversion that is
 real. Both were reverted. "Tight" has a floor, and the floor is the contract.
 
-- [ ] Rename the ten exports:
+- [x] Rename the ten exports:
 
   | now | final | why |
   |---|---|---|
@@ -351,17 +355,27 @@ real. Both were reverted. "Tight" has a floor, and the floor is the contract.
   | `bag_sp_assign_latlong` | `bag_assign_latlong` | as above |
   | `bag_sp_assign_sf_from_utm` | `bag_sf_from_utm` | the constructor; not an inverse of `bag_assign_utm`, so not named as a pair |
 
-- [ ] Unchanged, deliberately: `bag_url`, `bag_wfs`, `bag_gpx_import` (the verb is
+- [x] Unchanged, deliberately: `bag_url`, `bag_wfs`, `bag_gpx_import` (the verb is
       load-bearing — it writes files and returns `NULL`), `bag_gpkg_to_geojson` (a real
       conversion, and already the clearest name of the set)
-- [ ] Rename the two internals to the dotted convention this package already uses
+- [x] Rename the two internals to the dotted convention this package already uses
       (`.bag_ogr2ogr`, `.bag_reencode`, `.bag_source_resolve`, `.bag_url_args`):
       `bag_chk_sf_point` to `.bag_chk_sf_point`, and `bag_meta_bcd_xref_pkg_schtab` to
       `.bag_bcdc_schtab`
-- [ ] Four families, each coherent: **download** (3), **catalogue** (4), **files** (4),
+- [x] Four families, each coherent: **download** (3), **catalogue** (4), **files** (4),
       **coordinates** (3). The `gpkg_` stem groups the three GeoPackage functions without
-      needing a family of its own
-- [ ] `_pkgdown.yml` reference groups, `.lintr` per-file exclusion paths, `@seealso` and
+      needing a family of its own.
+
+      Two functions moved to reach those counts, which the plan stated only as totals.
+      `bag_bcdc` went from **download** to **catalogue** — the rename table's reason for
+      the name is "one stem for the catalogue family", and the four `bag_bcdc*` are what
+      make catalogue four. `bag_gpx_import` went from **files** to **download**, which
+      makes download three: it is the only one of the five file helpers that brings data
+      in from outside the project rather than operating on a file already in hand, and
+      the section it renders under is titled "Fetch" — the package's own `Title` is
+      "Fetch Public Data **and Field Files** to Disk". Verified by
+      `pkgdown::check_pkgdown()`: every export is reached by one of the four groups
+- [x] `_pkgdown.yml` reference groups, `.lintr` per-file exclusion paths, `@seealso` and
       `@family` cross-references, and the `system.file(package = )` calls all follow
 
 ### Measured asymmetry behind the coordinate names
@@ -428,16 +442,28 @@ does half the work, and is immune to the data-masking trap a bare variable insid
       its columns land after it. Pinned rather than reconciled: the files callers write
       back carry this order. Mutation-checked with two `relocate()` edits in a copy of the
       tree, 4 tests red
-- [ ] Per file, done with the Phase 9 rename so each is touched once:
+- [x] **`dplyr::arrange(epsg)` turned out to be dead once the loop replaced
+      `group_split`**, and was removed. It existed to make the group order agree with the
+      separately derived CRS vector. A mutation test is what found it: deleting it left
+      the ordering test **green**, because the rows now come back zone-ordered from the
+      sorted loop keys and `bind_rows()`. Reversing the loop keys takes that test red, so
+      the invariant is still pinned — just by the loop rather than by a prior sort
+- [x] **Two tests added for the trap the `!!` injection exists to close.** Nothing in the
+      suite distinguished `!!xy[, 1]` from a bare `xy[, 1]`, so the reason for the
+      injection was unpinned. Each new test hands the function a decoy column named like
+      the local it injects — `xy`, and `lon` for the zone arithmetic — and asserts the
+      coordinates still come from the geometry. Mutation-checked by dropping the five
+      `!!` marks: 5 assertions red
+- [x] Per file, done with the Phase 9 rename so each is touched once:
       `bag_assign_latlong` — drop the two `st_coordinates(.)` calls for one, inject with
       `!!`; `bag_assign_utm` — the same, plus replace the `group_split`/`map2` pair whose
       group order has to match a separately derived CRS vector (an invariant held together
       by a comment) with a loop over `unique(sort(epsg))`; `bag_sf_from_utm` — `%>%` to
       `|>`, its `.x` is a purrr lambda and needs nothing; `bag_gpkg_refresh` — `%>%` to
       `|>`, a plain chain
-- [ ] `magrittr` out of `Imports` (16 to 15) and the four `@importFrom magrittr %>%` lines
+- [x] `magrittr` out of `Imports` (16 to 15) and the four `@importFrom magrittr %>%` lines
       out; `rlang` stays for `:=` and `.data`
-- [ ] The four per-file `pipe_consistency_linter` exclusions come out of `.lintr` with it
+- [x] The four per-file `pipe_consistency_linter` exclusions come out of `.lintr` with it
 
 ## Owed at the end (reported, done after merge)
 
