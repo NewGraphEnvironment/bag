@@ -30,7 +30,7 @@ issue -> /planning-init <N> -> tests -> code-check -> atomic commits -> /plannin
 
 Some work here originates from an issue in a private repo. `/planning-init <N>` resolves
 the number against *this* repo, so it cannot be used for those — it would look for a
-spacehakr issue that does not exist.
+bag issue that does not exist.
 
 Reference the originating issue by hand in `task_plan.md` instead, and keep project
 context out of this public repo: describe the change on its own technical merits and

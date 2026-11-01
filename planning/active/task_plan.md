@@ -148,29 +148,45 @@ package — verified above, not assumed.
       `importFrom()` without being in `DESCRIPTION Imports:` today, CI is green, and the
       prune does not change that
 
-## Phase 4 — Package identity
+## Phase 4a — Package identity: the name
 
-- [ ] `DESCRIPTION`: `Package: bag`; `Title`/`Description` about fetching public data and
-      field files to disk, with the "Extracted from the ngr package" sentence gone;
-      `URL`/`BugReports` to the new path; `Version: 0.5.0`
-- [ ] `git mv spacehakr.Rproj bag.Rproj` **with** `.Rbuildignore`'s `^spacehakr\.Rproj$` in
-      the same commit — out of step, the `.Rproj` ships in the tarball
-- [ ] `_pkgdown.yml`: new `url:`, and **add a `reference:` section**. It has none today, so
-      the index is auto-generated and `pkgdown::check_pkgdown()` has nothing to check —
-      the gate the convention recommends is currently vacuous here
-- [ ] `CITATION.cff` by hand via `/citation-cff` — eight hits, and its workflow fires only
-      on a push to `main` touching `DESCRIPTION`, so on this branch it stays stale and
-      fails the grep gate below
+Split from 4b because the two halves are blocked by different things. Everything here is
+independent of the repository rename; everything in 4b needs it.
+
+- [x] `DESCRIPTION`: `Package: bag`, and a `Title`/`Description` about fetching public data
+      and field files to disk, with the "Extracted from the ngr package" sentence gone
+- [x] `git mv spacehakr.Rproj bag.Rproj` **with** `.Rbuildignore`'s `^spacehakr\.Rproj$` in
+      the same commit — out of step, the `.Rproj` ships in the tarball. Also dropped
+      `^vignettes/articles$`, dead since Phase 3 deleted the directory
+- [x] `_pkgdown.yml`: **added a `reference:` section**. It had none, so the index was
+      auto-generated and `pkgdown::check_pkgdown()` had nothing to check. It now runs —
+      and immediately aborts on the URL mismatch, which is 4b's work
+- [x] `tests/testthat.R` (`library()` and `test_check()`) and every
+      `system.file(package = )` call in the keepers' tests
+- [x] `data-raw/make_hexsticker.R` `package_name`; `dev/vm_packages.md`;
+      `planning/README.md`
+- [ ] Regenerate `man/figures/logo*.png` from the edited hexsticker script
+
+**Moved to Phase 7:** the `Version:` bump. `r-packages.md` puts it as the *final* commit of
+the branch, "after verification numbers/tests are final" — a mid-branch bump is churn, and
+the plan had it here by mistake.
+
+## Phase 4b — Package identity: the URLs (blocked on Phase 1)
+
+Every item names a path containing the repository name, so none can be written until the
+rename lands. Target: `https://www.newgraphenvironment.com/bag/`.
+
+- [ ] `DESCRIPTION` `URL:` and `BugReports:`
+- [ ] `_pkgdown.yml` `url:` — must agree with `DESCRIPTION`, or `check_pkgdown()` aborts
+- [ ] `CITATION.cff` via `/citation-cff` — eight hits, and its workflow fires only on a
+      push to `main` touching `DESCRIPTION`, so on this branch it stays stale
 - [ ] `README.Rmd` → re-knit. Larger than a find-and-replace: the two functions the package
-      now exists for appear **nowhere** in it today, including in its function table, so
-      this is writing their first examples with real output. Also the two CI badge URLs at
-      `:20`, the logo `alt` text at `:16`, the install line and the `library()` calls
-- [ ] `data-raw/make_hexsticker.R` `package_name <- "bag"`; regenerate `man/figures/logo*.png`
-- [ ] `NEWS.md`: a `# bag 0.5.0` heading recording the rename, the four new names, the
-      deletion with its `v0.4.2` tag, and the intake. Leave the `# spacehakr <v>` history
-- [ ] `dev/vm_packages.md` — titled for spacehakr and wrong in about a dozen places after
-      the prune; `planning/README.md:33`; `tests/testthat.R`; the
-      `system.file(package = )` calls in the keepers' tests
+      exists for appear **nowhere** in it today, including in its function table, so this is
+      writing their first examples with real output. Also the two CI badge URLs at `:20`,
+      the logo `alt` text at `:16`, the install line and the `library()` calls
+- [ ] `NEWS.md`: a `# bag <version>` heading recording the rename, the new names, the
+      deletion with its `v0.4.2` tag, and the intake. Leave the `# spacehakr <v>` history.
+      Written with the version, so it lands with Phase 7
 - [ ] `CLAUDE.md` above the marker: Repository/URL lines, the migration table, the naming
       section, the `@family` list, the `Key Dependencies` list (drop `httr`), the file-name
       and `gh issue create` examples, and the stale `Remotes:` section. Name no internal repo

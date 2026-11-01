@@ -2,3 +2,12 @@ url: http://www.newgraphenvironment.com/spacehakr/
 template:
   bootstrap: 5
 
+reference:
+- title: Fetch
+  desc: Download public data to disk.
+  contents:
+  - has_concept("download")
+- title: Files
+  desc: Read, convert and inspect spatial files.
+  contents:
+  - has_concept("files")

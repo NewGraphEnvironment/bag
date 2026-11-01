@@ -2,7 +2,7 @@ test_that("bag_layer_info returns layer information from GeoPackage", {
   skip_if_not_installed("sf")
   
   # Use existing test data
-  path <- system.file("extdata/poly.gpkg", package = "spacehakr")
+  path <- system.file("extdata/poly.gpkg", package = "bag")
   
   result <- bag_layer_info(path)
   
@@ -15,7 +15,7 @@ test_that("bag_layer_info returns layer information from GeoPackage", {
 test_that("bag_layer_info identifies geometry type correctly", {
   skip_if_not_installed("sf")
   
-  path <- system.file("extdata/poly.gpkg", package = "spacehakr")
+  path <- system.file("extdata/poly.gpkg", package = "bag")
   
   result <- bag_layer_info(path)
   
@@ -96,7 +96,7 @@ test_that("bag_layer_info errors on non-existent file", {
 test_that("bag_layer_info does not include driver column", {
   skip_if_not_installed("sf")
   
-  path <- system.file("extdata/poly.gpkg", package = "spacehakr")
+  path <- system.file("extdata/poly.gpkg", package = "bag")
   
   result <- bag_layer_info(path)
   
