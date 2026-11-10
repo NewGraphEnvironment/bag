@@ -325,7 +325,7 @@ list from `gh repo list --visibility private` (72 repos), then one `git grep -E`
 | `planning/active/task_plan.md` | three links to a private consumer's PRs, one reference to the R&D tracking issue by `repo#N` |
 | `planning/active/progress.md` | two of the same links, two `repo#N` forms |
 | `planning/active/review-round4-identity.md` | six `repo#N` forms for donor-defect issues, five local machine paths (`~/Projects/repo/soul/...`) |
-| `planning/archive/2026-09-issue-256-spk-source-url/` (4 files) | `rfp#256` in each title, and in one body |
+| `planning/archive/2026-09-issue-256-spk-source-url/` (4 files) | an internal issue in each title, and in one body |
 
 All fifteen are now words instead: "the other consumer's pinning PR", "the R&D tracking
 issue", "four with the internal package". The two public donor issues keep their links,
@@ -334,7 +334,7 @@ the synced appendix itself uses.
 
 **Two things this does not fix.** The references are in this repo's git history, which is
 public and is not being rewritten for a private repo *name*; and the archive's four files
-had carried `rfp#256` in their titles since September, so the exposure is seven weeks old,
+had carried an internal issue in their titles since September, so the exposure is seven weeks old,
 not one day. What a reader could learn from them is that a private repo exists under a given
 name and that an issue of some number in it concerns this work — no titles, no bodies.
 
